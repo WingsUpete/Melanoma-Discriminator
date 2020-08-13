@@ -12,7 +12,7 @@ import time
 
 import numpy as np
 import pandas as pd
-from skimage import io, transform
+from PIL import Image
 
 import torch
 import torchvision
@@ -39,21 +39,24 @@ class Rescale(object):
         self.output_size = output_size
 
     def __call__(self, sample):
-        image, meta = sample['image'], sample['meta']
+        #time0 = time.time()
+        image = sample
 
-        h, w = image.shape[:2]
+        w, h = image.size
         if isinstance(self.output_size, int):
-            if h > w:
-                new_h, new_w = self.output_size * h / w, self.output_size
+            if w < h:
+                new_w, new_h = self.output_size, self.output_size * h / w
             else:
-                new_h, new_w = self.output_size, self.output_size * w / h
+                new_w, new_h = self.output_size * w / h, self.output_size
         else:
-            new_h, new_w = self.output_size
+            new_w, new_h = self.output_size
 
-        new_h, new_w = int(new_h), int(new_w)
-        img = transform.resize(image, (new_h, new_w))
+        new_w, new_h = int(new_w), int(new_h)
+        #time1 = time.time()
+        img = image.resize((new_w, new_h))
 
-        return {'image': img, 'meta': meta}
+        #print("Rescale: {} | {}".format(time1 - time0, time.time() - time1))
+        return img
 
 class RandomCrop(object):
     """ 
@@ -71,31 +74,31 @@ class RandomCrop(object):
             self.output_size = output_size
 
     def __call__(self, sample):
-        image, meta = sample['image'], sample['meta']
+        #time0 = time.time()
+        image = sample
 
-        h, w = image.shape[:2]
-        new_h, new_w = self.output_size
-
-        top = np.random.randint(0, h - new_h)
+        w, h = image.size
+        new_w, new_h = self.output_size
+        
         left = np.random.randint(0, w - new_w)
+        top = np.random.randint(0, h - new_h)
 
-        image = image[top : top + new_h, \
-                      left : left + new_w]
-
-        return {'image': image, 'meta': meta}
+        image = image.crop((left, top, left + new_w, top + new_h))
+        
+        #print("RandomCrop: {}".format(time.time() - time0))
+        return image
 
 class ToTensor(object):
     """ Convert ndarrays in sample to Tensors. """
 
     def __call__(self, sample):
-        image, meta = sample['image'], sample['meta']
+        #time0 = time.time()
+        image = sample
 
-        # swap color axis because
-        # numpy image: H x W x C
-        # torch image: C x H x W
-        image = image.transpose((2, 0, 1))
-        return {'image': torch.from_numpy(image), \
-                'meta': meta}
+        tt = transforms.ToTensor()
+        image = tt(image)
+        #print("ToTensor: {}".format(time.time() - time0))
+        return image
 
 class MDS_Entity(Dataset):
     """
@@ -128,27 +131,19 @@ class MDS_Entity(Dataset):
         img_name = '{}.jpg'.format(os.path.join(self.root_dir, \
                                 self.data_frame.iloc[idx, 0]))
         #time0 = time.time()
-        image = io.imread(img_name)
-        meta = {}
-        if self.test:
-            meta['image_name'], meta['sex'], meta['age_approx'], \
-            meta['anatom_site_general_challenge'] = self.data_frame.iloc[idx, :]
-            meta['target'] = -1     # just for generalization
-        else:
-            meta['image_name'], meta['sex'], meta['age_approx'], \
-            meta['anatom_site_general_challenge'], meta['diagnosis'], \
-            meta['benign_malignant'], meta['target'] = self.data_frame.iloc[idx, :]
-        sample = {'image': image, 'meta': meta}
+        image = Image.open(img_name)
+        label = self.data_frame.iloc[idx, 6] if not self.test else -1
         #time1 = time.time()
 
         if self.transform:
-            sample = self.transform(sample)
+            image = self.transform(image)
             
         #time2 = time.time()
         #print("load: {}\t\ttransform: {}".format(time1-time0, time2-time1))
 
         # return data & label
-        return (sample, sample['meta']['target'])
+        sample = {'image': image, 'target': label}
+        return sample
 
 class MelanomaDataSet:
     """ Melanoma DataSet """
@@ -170,8 +165,8 @@ class MelanomaDataSet:
         self.path = path
 
         self.transform = transforms.Compose([
-            Rescale(256), \
-            RandomCrop(224), \
+            Rescale(512), \
+            RandomCrop(500), \
             ToTensor() \
         ])
 
@@ -202,9 +197,9 @@ def testSamplingSpeed(ds, batch_size, shuffle, tag):
     time0 = time.time()
 
     for i, batch in enumerate(dataloader):
-        samples, label = batch
+        samples, labels = batch['image'], batch['target']
         if device:
-            samples['image'], label = samples['image'].to(device), label.to(device)
+            samples, labels = samples.to(device), labels.to(device)
         sys.stderr.write("\r{} Set - Batch No. {}/{} with time used(s): {}".format(tag, i + 1, len(dataloader), time.time() - time0))
         sys.stderr.flush()
     sys.stderr.write("\n")
@@ -215,6 +210,6 @@ if __name__ == '__main__':
 
     dataset = MelanomaDataSet(Config.DATA_DIR_DEFAULT, transform=True)
     
-    testSamplingSpeed(dataset.trainset, 32, True, "Training")
-    testSamplingSpeed(dataset.validset, 16, False, "Validation")
-    testSamplingSpeed(dataset.testset, 16, False, "Test")
+    testSamplingSpeed(dataset.trainset, 10, True, "Training")
+    testSamplingSpeed(dataset.validset, 5, False, "Validation")
+    testSamplingSpeed(dataset.testset, 5, False, "Test")
