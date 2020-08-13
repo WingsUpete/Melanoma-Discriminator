@@ -39,7 +39,6 @@ class Rescale(object):
         self.output_size = output_size
 
     def __call__(self, sample):
-        #time0 = time.time()
         image = sample
 
         w, h = image.size
@@ -52,10 +51,8 @@ class Rescale(object):
             new_w, new_h = self.output_size
 
         new_w, new_h = int(new_w), int(new_h)
-        #time1 = time.time()
         img = image.resize((new_w, new_h))
 
-        #print("Rescale: {} | {}".format(time1 - time0, time.time() - time1))
         return img
 
 class RandomCrop(object):
@@ -74,7 +71,6 @@ class RandomCrop(object):
             self.output_size = output_size
 
     def __call__(self, sample):
-        #time0 = time.time()
         image = sample
 
         w, h = image.size
@@ -85,19 +81,16 @@ class RandomCrop(object):
 
         image = image.crop((left, top, left + new_w, top + new_h))
         
-        #print("RandomCrop: {}".format(time.time() - time0))
         return image
 
 class ToTensor(object):
     """ Convert ndarrays in sample to Tensors. """
 
     def __call__(self, sample):
-        #time0 = time.time()
         image = sample
 
         tt = transforms.ToTensor()
         image = tt(image)
-        #print("ToTensor: {}".format(time.time() - time0))
         return image
 
 class MDS_Entity(Dataset):
@@ -130,16 +123,11 @@ class MDS_Entity(Dataset):
 
         img_name = '{}.jpg'.format(os.path.join(self.root_dir, \
                                 self.data_frame.iloc[idx, 0]))
-        #time0 = time.time()
         image = Image.open(img_name)
         label = self.data_frame.iloc[idx, 6] if not self.test else -1
-        #time1 = time.time()
 
         if self.transform:
             image = self.transform(image)
-            
-        #time2 = time.time()
-        #print("load: {}\t\ttransform: {}".format(time1-time0, time2-time1))
 
         # return data & label
         sample = {'image': image, 'target': label}
@@ -148,7 +136,7 @@ class MDS_Entity(Dataset):
 class MelanomaDataSet:
     """ Melanoma DataSet """
 
-    def __init__(self, path, train=True, valid=True, test=True, transform=True):
+    def __init__(self, path, train=True, valid=True, test=True):
         """
         Inputs:
             train, valid, test (Boolean): whether the training set, validation set, test set
@@ -174,20 +162,19 @@ class MelanomaDataSet:
             sys.stderr.write('Loading training set...\n')
             self.trainset = MDS_Entity(csv_file=os.path.join(self.path, 'training_set.csv'), \
                                        root_dir=os.path.join(self.path, 'Training_set'), \
-                                       transform=self.transform if transform else None)
+                                       transform=self.transform)
 
         if valid:
             sys.stderr.write('Loading validation set...\n')
             self.validset = MDS_Entity(csv_file=os.path.join(self.path, 'validation_set.csv'), \
                                        root_dir=os.path.join(self.path, 'Validation_set'), \
-                                       transform=self.transform if transform else None)
+                                       transform=self.transform)
 
         if test:
             sys.stderr.write('Loading test set...\n')
             self.testset = MDS_Entity(csv_file=os.path.join(self.path, 'test_set.csv'), \
                                        root_dir=os.path.join(self.path, 'Test_set'), \
-                                       transform=self.transform if transform else None, \
-                                      test=True)
+                                       transform=self.transform, test=True)
         
         self.__sets__ = {'train': train, 'validation': valid, 'test': test}
         sys.stderr.write('Melanoma DataSet Ready: {}\n'.format([key for key in self.__sets__ if self.__sets__[key]]))
@@ -208,7 +195,7 @@ if __name__ == '__main__':
     device = torch.device("cuda:0" if (torch.cuda.is_available()) else "cpu")
     print("device: {}".format(device))
 
-    dataset = MelanomaDataSet(Config.DATA_DIR_DEFAULT, transform=True)
+    dataset = MelanomaDataSet(Config.DATA_DIR_DEFAULT)
     
     testSamplingSpeed(dataset.trainset, 10, True, "Training")
     testSamplingSpeed(dataset.validset, 5, False, "Validation")
