@@ -104,17 +104,19 @@ class MDS_Entity(Dataset):
     eg. img_1, female, 35, torso, unknown, benign, 0
     """
 
-    def __init__(self, csv_file, root_dir, transform=None):
+    def __init__(self, csv_file, root_dir, transform=None, test=False):
         """
         Args:
             csv_file (string): Path to the csv file with annotations.
             root_dir (string): Directory with all the images.
             transform (callable, optional): Optional transform to be applied
                 on a sample.
+            test (Boolean): whether this is a test set
         """
         self.data_frame = pd.read_csv(csv_file)
         self.root_dir = root_dir
         self.transform = transform
+        self.test = test
 
     def __len__(self):
         return len(self.data_frame)
@@ -128,9 +130,14 @@ class MDS_Entity(Dataset):
         #time0 = time.time()
         image = io.imread(img_name)
         meta = {}
-        meta['image_name'], meta['sex'], meta['age_approx'], \
-        meta['anatom_site_general_challenge'], meta['diagnosis'], \
-        meta['benign_malignant'], meta['target'] = self.data_frame.iloc[idx, :]
+        if self.test:
+            meta['image_name'], meta['sex'], meta['age_approx'], \
+            meta['anatom_site_general_challenge'] = self.data_frame.iloc[idx, :]
+            meta['target'] = -1     # just for generalization
+        else:
+            meta['image_name'], meta['sex'], meta['age_approx'], \
+            meta['anatom_site_general_challenge'], meta['diagnosis'], \
+            meta['benign_malignant'], meta['target'] = self.data_frame.iloc[idx, :]
         sample = {'image': image, 'meta': meta}
         #time1 = time.time()
 
@@ -184,28 +191,30 @@ class MelanomaDataSet:
             sys.stderr.write('Loading test set...\n')
             self.testset = MDS_Entity(csv_file=os.path.join(self.path, 'test_set.csv'), \
                                        root_dir=os.path.join(self.path, 'Test_set'), \
-                                       transform=self.transform if transform else None)
+                                       transform=self.transform if transform else None, \
+                                      test=True)
         
         self.__sets__ = {'train': train, 'validation': valid, 'test': test}
         sys.stderr.write('Melanoma DataSet Ready: {}\n'.format([key for key in self.__sets__ if self.__sets__[key]]))
+
+def testSamplingSpeed(ds, batch_size, shuffle, tag):
+    dataloader = DataLoader(ds, batch_size=batch_size, shuffle=shuffle, num_workers=4)
+    time0 = time.time()
+
+    for i, batch in enumerate(dataloader):
+        samples, label = batch
+        if device:
+            samples['image'], label = samples['image'].to(device), label.to(device)
+        sys.stderr.write("\r{} Set - Batch No. {}/{} with time used(s): {}".format(tag, i + 1, len(dataloader), time.time() - time0))
+        sys.stderr.flush()
+    sys.stderr.write("\n")
 
 if __name__ == '__main__':
     device = torch.device("cuda:0" if (torch.cuda.is_available()) else "cpu")
     print("device: {}".format(device))
 
-    dataset = MelanomaDataSet(Config.data_path, transform=True)
+    dataset = MelanomaDataSet(Config.DATA_DIR_DEFAULT, transform=True)
     
-    trainloader = DataLoader(dataset.trainset, batch_size=32, shuffle=True, num_workers=4)
-    time0 = time.time()
-    for i, batch in enumerate(trainloader):
-        samples, label = batch
-        if device:
-            samples['image'], label = samples['image'].to(device), label.to(device)
-        #print(i, samples['image'].size(), label)
-        sys.stderr.write('\rBatch No. {}/{}'.format(i + 1, len(trainloader)))
-        sys.stderr.flush()
-        #if i == 10:
-        #    break
-    sys.stderr.write("\n")
-    time1 = time.time()
-    print("Iteration takes seconds: {}".format(time1 - time0))
+    testSamplingSpeed(dataset.trainset, 32, True, "Training")
+    testSamplingSpeed(dataset.validset, 16, False, "Validation")
+    testSamplingSpeed(dataset.testset, 16, False, "Test")
