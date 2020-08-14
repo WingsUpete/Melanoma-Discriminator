@@ -36,7 +36,7 @@ def stdLog(stdwhich, str, DEBUG=True, fd=None):
 
 def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATCH_SIZE_DEFAULT, ef_ver=Config.EFNET_VER_DEFAULT, \
           max_epoch=Config.MAX_EPOCHS_DEFAULT,  eval_freq=Config.EVAL_FREQ_DEFAULT, optimizer=Config.OPTIMIZER_DEFAULT, \
-          num_workers=Config.WORKERS_DEFAULT, use_gpu=True, folder=Config.DATA_DIR_DEFAULT, DEBUG=True, fd=None):
+          num_workers=Config.WORKERS_DEFAULT, use_gpu=True, folder=Config.DATA_DIR_DEFAULT, DEBUG=True, fd=None, time_tag='WHEN'):
     """
     Performs training and evaluation of the CNN model.
     """
@@ -123,6 +123,14 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
 
                 stdLog(sys.stdout, '!!! Validation : acc = %.2f%%, roc_auc = %.2f%% !!!\n' % (val_acc * 100, val_roc_auc * 100), DEBUG, fd)
     
+    if not os.path.isdir(Config.MODEL_DEFAULT):
+        os.mkdir(Config.MODEL_DEFAULT)
+
+    model_name = os.path.join(Config.MODEL_DEFAULT, '{}.pth'.format(time_tag))
+    torch.save(net, model_name)
+    stdLog(sys.stdout, 'Model: {} has been saved.\n'.format(model_name), DEBUG, fd)
+    #net = torch.load(model_name)
+
 if __name__ == '__main__':
     # Command Line Arguments
     parser = argparse.ArgumentParser()
@@ -149,14 +157,16 @@ if __name__ == '__main__':
 
     FLAGS, unparsed = parser.parse_known_args()
 
+    time_tag = datetime.now().strftime('%Y%m%d_%H_%M_%S')
+
     # Starts a log file in the specified directory
     if FLAGS.log:
         if not os.path.isdir(FLAGS.log):
             os.mkdir(FLAGS.log)
-        fd = open(os.path.join(FLAGS.log, '{}.log'.format(datetime.now().strftime('%Y%m%d_%H_%M_%S'))), 'w')
+        fd = open(os.path.join(FLAGS.log, '{}.log'.format(time_tag)), 'w')
     else:
         fd = None
 
     train(learning_rate = FLAGS.learning_rate, minibatch_size = FLAGS.minibatch_size, max_epoch = FLAGS.max_steps, \
           ef_ver=FLAGS.efnet_version, eval_freq = FLAGS.eval_freq, optimizer = FLAGS.optimizer, num_workers=FLAGS.cores, \
-          use_gpu = FLAGS.gpu, folder = FLAGS.data_dir, DEBUG = True, fd = fd)
+          use_gpu = FLAGS.gpu, folder = FLAGS.data_dir, DEBUG = True, fd = fd, time_tag=time_tag)

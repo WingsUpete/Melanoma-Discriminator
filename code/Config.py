@@ -9,12 +9,12 @@ from torchvision import transforms
 # Settings
 train_transform = transforms.Compose([ \
     transforms.RandomResizedCrop(size=240, scale=(0.9, 1.0)), \
+    transforms.RandomHorizontalFlip(), \
+    transforms.RandomVerticalFlip(), \
     transforms.ToTensor(), \
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]) # standard for EfficientNet \
 ])
 # TODO: test with additional:
-#    transforms.RandomHorizontalFlip(), \
-#    transforms.RandomVerticalFlip(), \
 
 eval_transform = transforms.Compose([ \
     transforms.RandomResizedCrop(size=240, scale=(0.996, 1.0)), \
@@ -31,6 +31,7 @@ OPTIMIZER_DEFAULT = 'RMSprop'
 WEIGHT_DECAY_DEFAULT = 0.01
 DATA_DIR_DEFAULT = 'DataSet'
 LOG_DEFAULT = 'log'
+MODEL_DEFAULT = 'model'
 WORKERS_DEFAULT = 4
 USE_GPU_DEFAULT = True
 EFNET_VER_DEFAULT = 1
