@@ -96,7 +96,7 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
             train_loss += loss.item()
         train_total = len(dataset.trainset)
         train_acc = train_correct / train_total
-        stdLog(sys.stdout, 'Training Round {}: acc = %.2f%%, loss = %.2f\n' % (epoch_i, train_acc, loss.item()), DEBUG, fd)
+        stdLog(sys.stdout, 'Training Round %d: acc = %.2f%%, loss = %.2f\n' % (epoch_i, train_acc, loss.item()), DEBUG, fd)
     
         # evaluate every eval_freq
         #if (epoch_i % eval_freq == 0):
