@@ -17,17 +17,17 @@ train_transform = transforms.Compose([ \
 #    transforms.RandomVerticalFlip(), \
 
 eval_transform = transforms.Compose([ \
-    transforms.CenterCrop(size=240), \
+    transforms.RandomResizedCrop(size=240, scale=(0.95, 1.0)), \
     transforms.ToTensor(), \
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]) # standard for EfficientNet \
 ])
 
 # Default values
 LEARNING_RATE_DEFAULT = 1e-3    # TODO: test with 1e-2
-BATCH_SIZE_DEFAULT = 32
+BATCH_SIZE_DEFAULT = 64
 MAX_EPOCHS_DEFAULT = 666
 EVAL_FREQ_DEFAULT = 5
-OPTIMIZER_DEFAULT = 'ADAM'
+OPTIMIZER_DEFAULT = 'RMSprop'
 WEIGHT_DECAY_DEFAULT = 0.01
 DATA_DIR_DEFAULT = 'DataSet'
 LOG_DEFAULT = 'log'
