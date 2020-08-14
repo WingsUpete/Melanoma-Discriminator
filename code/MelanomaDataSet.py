@@ -9,6 +9,7 @@
 import os
 import sys
 import time
+import argparse
 
 import numpy as np
 import pandas as pd
@@ -144,8 +145,18 @@ def testSamplingSpeed(ds, batch_size, shuffle, tag, num_workers=4):
     sys.stderr.write("\n")
 
 if __name__ == '__main__':
+    """
+    Usage Example:
+        py MelanomaDataSet.py -c 6
+    """
+    # Command Line Arguments
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-c', '--cores', type=int, default=4, \
+                        help='number of workers (cores used), default=4')
+    FLAGS, unparsed = parser.parse_known_args()
+    print('Running with {} workers.'.format(FLAGS.cores))
+
     dataset = MelanomaDataSet(path=Config.DATA_DIR_DEFAULT, transform=Config.image_transform)
-    num_workers = 4
-    testSamplingSpeed(dataset.trainset, 32, True, "Training", num_workers)
-    testSamplingSpeed(dataset.validset, 16, False, "Validation", num_workers)
-    testSamplingSpeed(dataset.testset, 16, False, "Test", num_workers)
+    testSamplingSpeed(dataset.trainset, 32, True, "Training", FLAGS.cores)
+    testSamplingSpeed(dataset.validset, 16, False, "Validation", FLAGS.cores)
+    testSamplingSpeed(dataset.testset, 16, False, "Test", FLAGS.cores)
