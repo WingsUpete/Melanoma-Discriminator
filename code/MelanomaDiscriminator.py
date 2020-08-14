@@ -96,7 +96,7 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
             train_loss += loss.item()
         train_total = len(dataset.trainset)
         train_acc = train_correct / train_total
-        stdLog(sys.stdout, 'Training Round %d: acc = %.2f%%, loss = %.2f\n' % (epoch_i, train_acc, loss.item()), DEBUG, fd)
+        stdLog(sys.stdout, 'Training Round %d: acc = %.2f%%, loss = %.2f\n' % (epoch_i, train_acc * 100, loss.item()), DEBUG, fd)
     
         # evaluate every eval_freq
         if (epoch_i % eval_freq == 0):
@@ -115,7 +115,7 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
                     val_correct += (val_preds == val_labels).sum().item()
                 val_total = len(dataset.validset)
                 val_acc = val_correct / val_total
-                stdLog(sys.stdout, '!!! Validation : acc = %.2f%%' % (val_acc), DEBUG, fd)
+                stdLog(sys.stdout, '!!! Validation : acc = %.2f%%\n' % (val_acc * 100), DEBUG, fd)
     
 if __name__ == '__main__':
     # Command Line Arguments
