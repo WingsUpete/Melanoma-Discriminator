@@ -74,7 +74,7 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
     stdLog(sys.stdout, "eval_freq = {}, minibatch_size = {}, optimizer = {}\n".format(eval_freq, minibatch_size, optimizer), DEBUG, fd)
     stdLog(sys.stdout, "Using EfficientNet {}\n".format(ef_ver), DEBUG, fd)
 
-    stdLog(sys.stdout, "------------------------------------------------------------------\n", DEBUG, fd)
+    stdLog(sys.stdout, "--------------------------------------------------------\n", DEBUG, fd)
     
     for epoch_i in range(max_epoch):
         # train one round
@@ -121,8 +121,7 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
                     val_pred_list[j * validloader.batch_size : j * validloader.batch_size + len(val_samples)] = val_res
                     #for item in val_pred_list:
                     #    print(item) # debug
-                val_label_list = dataset.validset.data_frame[:, 6]
-                print(val_label_list)
+                val_label_list = dataset.validset.data_frame.iloc[:, 6].type_as(val_pred_list)
                 val_acc = accuracy_score(val_label_list, torch.round(val_pred_list))    # accuracy on threshold value = 0.5
                 val_roc_auc = roc_auc_score(val_label_list, val_pred_list)               # AUC score
                 stdLog(sys.stdout, '!!! Validation : acc = %.2f%%, roc_auc = %.2f%%\n' % (val_acc * 100, val_roc_auc * 100), DEBUG, fd)
