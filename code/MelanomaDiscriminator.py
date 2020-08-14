@@ -18,6 +18,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 
+from sklearn.metrics import accuracy_score, roc_auc_score
+
 from MelanomaDataSet import MelanomaDataSet
 from MelanomaModel import Net
 
@@ -104,6 +106,8 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
         if (epoch_i % eval_freq == 0):
             net.eval()
             with torch.no_grad():
+                val_pred_list = torch.zeros((len(dataset.validset)))
+                val_pred_list = val_pred_list.to(device)
                 val_correct = 0
                 # Evaluate using the validation set
                 for j, val_batch in enumerate(validloader):
@@ -113,12 +117,12 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
                     val_res = net(val_samples)
                     val_res = val_res.reshape(-1)
                     val_labels = val_labels.type_as(val_res)
-                    val_preds = torch.round(torch.sigmoid(val_res))
-                    val_correct += (val_preds == val_labels).sum().item()
-                    print(val_correct, len(dataset.validset))
-                val_total = len(dataset.validset)
-                val_acc = val_correct / val_total
-                stdLog(sys.stdout, '!!! Validation : acc = %.2f%%\n' % (val_acc * 100), DEBUG, fd)
+
+                    val_res = torch.sigmoid(val_res)
+                    val_pred_list[j * validloader.batch_size : j * validloader.batch_size + len(val_samples)] = val_res
+                val_acc = accuracy_score(val_labels, torch.round(val_pred_list))    # accuracy on threshold value = 0.5
+                val_roc_auc = roc_auc_score(val_labels, val_res)
+                stdLog(sys.stdout, '!!! Validation : acc = %.2f%%, roc_auc = %.2f%%\n' % (val_acc * 100, val_roc_auc * 100), DEBUG, fd)
     
 if __name__ == '__main__':
     # Command Line Arguments
