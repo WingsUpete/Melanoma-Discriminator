@@ -29,10 +29,10 @@ See `MelanomaDataSet.py` for more details
 
 The training/validation/test sets are packed using PyTorch’s `Dataset` and can be accessed through `DataLoader`. For each set, the image data and metadata are packed together as a sample. The images will be transformed with such procedure by default:
 
-1.  Resize and crop randomly to 256 x 256 with scaling of $(h=0.8, w=1.0)$
-3.  Flip horizontally and vertically, each with a $probability = 0.5$
-3.  Transform to tensor
-4.  Normalize channel values with $mean=(0.485, 0.456, 0.406)$, $std=(0.229, 0.224, 0.225)$
+1.  Resize and crop randomly to `224 x 224` with scaling of `[0.9, 1.0]`
+3.  ~~Flip horizontally and vertically, each with a `probability = 0.5`~~
+3.  ~~Transform to tensor~~
+4.  Normalize channel values with `mean=(0.485, 0.456, 0.406)`, `std=(0.229, 0.224, 0.225)`
 
 <br>
 
@@ -40,6 +40,9 @@ The training/validation/test sets are packed using PyTorch’s `Dataset` and can
 
 [PyTorch’s `EfficientNet`](https://github.com/lukemelas/EfficientNet-PyTorch#about-efficientnet) is used to construct the model network.
 
-The last fully-connected layer is modified so that its number of output features becomes $500$.
+<br>
 
-A fully connected layer is added to the end to summarize the features to 1 channel. 
+## Discriminator
+
+-   Train on the training set
+-   Evaluate regularly using the validation set (Need to compute ROC & AUC)
