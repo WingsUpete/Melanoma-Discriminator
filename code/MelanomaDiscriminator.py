@@ -92,7 +92,7 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
             optimizer.step()
 
             preds = torch.round(torch.sigmoid(res)) # set threshold to be 0.5 so that values below 0.5 will be considered 0
-            train_correct += (preds == labels).sum().item
+            train_correct += (preds == labels).sum().item()
             train_loss += loss.item()
         train_total = len(dataset.trainset)
         train_acc = train_correct / train_total
