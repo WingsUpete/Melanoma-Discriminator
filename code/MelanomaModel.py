@@ -25,7 +25,7 @@ class Net(nn.Module):
         """
         super(Net, self).__init__()
         self.efnet_version = efnet_version if (isinstance(efnet_version, int) and \
-                                               efnet_version in [i for i in range(8)]) else Config.EFNET_VER_DEFAULT
+                                               efnet_version in [i + 1 for i in range(7)]) else Config.EFNET_VER_DEFAULT
         self.efnet = EfficientNet.from_pretrained('efficientnet-b{}'.format(self.efnet_version), num_classes=1)
     
     def forward(self, x):
