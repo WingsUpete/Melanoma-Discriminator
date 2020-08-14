@@ -18,6 +18,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 
+from sklearn.metrics import accuracy_score, roc_auc_score
+
 from MelanomaDataSet import MelanomaDataSet
 from MelanomaModel import Net
 
@@ -32,7 +34,7 @@ def stdLog(stdwhich, str, DEBUG=True, fd=None):
     if DEBUG:
         stdwhich.write(str)
 
-def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATCH_SIZE_DEFAULT, 
+def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATCH_SIZE_DEFAULT, ef_ver=Config.EFNET_VER_DEFAULT, \
           max_epoch=Config.MAX_EPOCHS_DEFAULT,  eval_freq=Config.EVAL_FREQ_DEFAULT, optimizer=Config.OPTIMIZER_DEFAULT, \
           num_workers=Config.WORKERS_DEFAULT, use_gpu=True, folder=Config.DATA_DIR_DEFAULT, DEBUG=True, fd=None):
     """
@@ -41,14 +43,14 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
 
     # Load Melanoma Datast
     stdLog(sys.stdout, "Loading Melanoma Dataset...\n", DEBUG, fd)
-    dataset = MelanomaDataSet(folder, transform=Config.image_transform)
+    dataset = MelanomaDataSet(folder, train_transform=Config.train_transform, eval_transform=Config.eval_transform)
     trainloader = DataLoader(dataset.trainset, batch_size=minibatch_size, shuffle=True, num_workers=num_workers)
-    validloader = DataLoader(dataset.validset, batch_size=int(minibatch_size/2), shuffle=True, num_workers=num_workers)
-    testloader = DataLoader(dataset.testset, batch_size=int(minibatch_size/2), shuffle=True, num_workers=num_workers)
+    validloader = DataLoader(dataset.validset, batch_size=minibatch_size, shuffle=False, num_workers=num_workers)
+    testloader = DataLoader(dataset.testset, batch_size=minibatch_size, shuffle=False, num_workers=num_workers)
 
     # Initialize the model
     stdLog(sys.stdout, "Initializing the Training Model...\n", DEBUG, fd)
-    net = Net()
+    net = Net(efnet_version=ef_ver)
     criterion = nn.BCEWithLogitsLoss()
 
     # Select Optimizer
@@ -68,30 +70,58 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
     # Start Training
     stdLog(sys.stdout, "Start Training!\n", DEBUG, fd)
 
-    stdLog(sys.stdout, "learning_rate = {}, max_epoch = {}\n".format(learning_rate, max_epoch), DEBUG, fd)
+    stdLog(sys.stdout, "learning_rate = {}, max_epoch = {}, num_workers = {}\n".format(learning_rate, max_epoch, num_workers), DEBUG, fd)
     stdLog(sys.stdout, "eval_freq = {}, minibatch_size = {}, optimizer = {}\n".format(eval_freq, minibatch_size, optimizer), DEBUG, fd)
+    stdLog(sys.stdout, "Using EfficientNet {}\n".format(ef_ver), DEBUG, fd)
 
-    stdLog(sys.stdout, "------------------------\n", DEBUG, fd)
+    stdLog(sys.stdout, "------------------------------------------------------------\n", DEBUG, fd)
     
     for epoch_i in range(max_epoch):
-        # SGD_once
+        # train one round
+        net.train()
+        train_correct = 0
+        train_loss = 0
         for i, batch in enumerate(trainloader):
             samples, metas, labels = batch['image'], batch['meta'], batch['target']
             if device:
                 samples, labels = samples.to(device), labels.to(device)
+
             optimizer.zero_grad()
             res = net(samples)
+            res = res.reshape(-1)           # [[1], [2], [3]] -> [1, 2, 3]
+            labels = labels.type_as(res)    # BCEWithLogitsLoss does not support Long
             loss = criterion(res, labels)
             loss.backward()
-            print(res, '|', labels, '|', loss)
             optimizer.step()
+
+            preds = torch.round(torch.sigmoid(res)) # set threshold to be 0.5 so that values below 0.5 will be considered 0
+            train_correct += (preds == labels).sum().item()
+            train_loss += loss.item()
+        train_total = len(dataset.trainset)
+        train_acc = train_correct / train_total
+        stdLog(sys.stdout, 'Training Round %d: acc = %.2f%%, loss = %.2f\n' % (epoch_i, train_acc * 100, loss.item()), DEBUG, fd)
     
         # evaluate every eval_freq
         if (epoch_i % eval_freq == 0):
+            net.eval()
             with torch.no_grad():
-                #print("epoch = %d,\ttraining_set_accuracy = %.2f%%, training_set_loss = %.2f, test_set_accuracy = %.2f%%, test_set_loss = %.2f" % \
-                #      (epoch_i, training_set_accuracy*100, training_set_loss, test_set_accuracy*100, test_set_loss))
-                pass
+                val_pred_list = torch.zeros((len(dataset.validset)))
+                val_pred_list = val_pred_list.to(device)
+                # Evaluate using the validation set
+                for j, val_batch in enumerate(validloader):
+                    val_samples, val_metas, val_labels = val_batch['image'], val_batch['meta'], val_batch['target']
+                    if device:
+                        val_samples, val_labels = val_samples.to(device), val_labels.to(device)
+                    val_res = net(val_samples)
+                    val_res = val_res.reshape(-1)
+                    val_labels = val_labels.type_as(val_res)
+
+                    val_res = torch.sigmoid(val_res)
+                    val_pred_list[j * validloader.batch_size : j * validloader.batch_size + len(val_samples)] = val_res
+                val_label_list = dataset.validset.label_list.type_as(val_pred_list)
+                val_acc = accuracy_score(val_label_list.cpu(), torch.round(val_pred_list.cpu()))    # accuracy on threshold value = 0.5
+                val_roc_auc = roc_auc_score(val_label_list.cpu(), val_pred_list.cpu())               # AUC score
+                stdLog(sys.stdout, '!!! Validation : acc = %.2f%%, roc_auc = %.2f%%\n' % (val_acc * 100, val_roc_auc * 100), DEBUG, fd)
     
 if __name__ == '__main__':
     # Command Line Arguments
@@ -114,6 +144,8 @@ if __name__ == '__main__':
                         help='number of workers (cores used), default={}'.format(Config.WORKERS_DEFAULT))
     parser.add_argument('-gpu', '--gpu', type=bool, default=Config.USE_GPU_DEFAULT, \
                         help='Specify whether to use GPU, default={}'.format(Config.USE_GPU_DEFAULT))
+    parser.add_argument('-ev', '--efnet_version', type=int, default=Config.EFNET_VER_DEFAULT, \
+                        help='The version of EfficientNet to be used, default={}'.format(Config.EFNET_VER_DEFAULT))
 
     FLAGS, unparsed = parser.parse_known_args()
 
@@ -126,5 +158,5 @@ if __name__ == '__main__':
         fd = None
 
     train(learning_rate = FLAGS.learning_rate, minibatch_size = FLAGS.minibatch_size, max_epoch = FLAGS.max_steps, \
-          eval_freq = FLAGS.eval_freq, optimizer = FLAGS.optimizer, num_workers=FLAGS.cores, use_gpu = FLAGS.gpu, \
-          folder = FLAGS.data_dir, DEBUG = True, fd = fd)
+          ef_ver=FLAGS.efnet_version, eval_freq = FLAGS.eval_freq, optimizer = FLAGS.optimizer, num_workers=FLAGS.cores, \
+          use_gpu = FLAGS.gpu, folder = FLAGS.data_dir, DEBUG = True, fd = fd)

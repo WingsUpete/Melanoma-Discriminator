@@ -14,19 +14,19 @@ from efficientnet_pytorch import EfficientNet
 
 class Net(nn.Module):
 
-    def __init__(self):
+    def __init__(self, efnet_version):
         """
         Initializes a model network.
         
+        Args:
+            efnet_version (int/str): which version to train on [0, 7]
         Vars:
             efnet (EfficientNet): the EfficientNet network to be used
         """
         super(Net, self).__init__()
-        self.efnet = EfficientNet.from_pretrained('efficientnet-b1')
-        ef_last_fc_in_features = self.efnet._fc.in_features     # 1280 for b1
-        ef_last_fc_out_features = 500
-        self.efnet._fc = nn.Linear(in_features=ef_last_fc_in_features, out_features=ef_last_fc_out_features, bias=True)
-        self.output = nn.Linear(ef_last_fc_out_features, 1)
+        self.efnet_version = efnet_version if (isinstance(efnet_version, int) and \
+                                               efnet_version in [i + 1 for i in range(7)]) else Config.EFNET_VER_DEFAULT
+        self.efnet = EfficientNet.from_pretrained('efficientnet-b{}'.format(self.efnet_version), num_classes=1)
     
     def forward(self, x):
         """
@@ -37,8 +37,9 @@ class Net(nn.Module):
         Returns:
           out: outputs of the network
         """
-        out = self.output(self.efnet(x))
+        out = self.efnet(x)
         return out
 
 if __name__ == '__main__':
-    net = Net()
+    net = Net(2)
+    

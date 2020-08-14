@@ -46,6 +46,13 @@ class MDS_Entity(Dataset):
         self.root_dir = root_dir
         self.transform = transform
         self.test = test
+        self.label_list = []
+        if not self.test:
+            for i in range(len(self.data_frame)):
+                self.label_list.append(MDS_Entity.tryConvertFloat(self.data_frame.iloc[i, 6]))
+            self.label_list = torch.Tensor(self.label_list)
+        else:
+            self.label_list = None
 
     def __len__(self):
         return len(self.data_frame)
@@ -74,7 +81,7 @@ class MDS_Entity(Dataset):
             "anatom_site_general_challenge": str(self.data_frame.iloc[idx, 3]), \
             "diagnosis": str(self.data_frame.iloc[idx, 4]), \
             "benign_malignant": str(self.data_frame.iloc[idx, 5]), \
-            "target": MDS_Entity.tryConvertInt(self.data_frame.iloc[idx, 6]) \
+            "target": MDS_Entity.tryConvertFloat(self.data_frame.iloc[idx, 6]) \
             }
 
         # return data & label
@@ -90,10 +97,19 @@ class MDS_Entity(Dataset):
         except ValueError:
             return -1
 
+    def tryConvertFloat(str):
+        """
+        Helper function: convert a string into an float. If fails, return -1.0 instead
+        """
+        try:
+            return float(str)
+        except ValueError:
+            return -1.0
+
 class MelanomaDataSet:
     """ Melanoma DataSet """
 
-    def __init__(self, path, transform=None, train=True, valid=True, test=True):
+    def __init__(self, path, train_transform=None, eval_transform=None, train=True, valid=True, test=True):
         """
         Inputs:
             train, valid, test (Boolean): whether the training set, validation set, test set
@@ -110,25 +126,26 @@ class MelanomaDataSet:
         """
         self.path = path
 
-        self.transform = transform
+        self.train_transform = train_transform
+        self.eval_transform = eval_transform
 
         if train:
             sys.stderr.write('Loading training set...\n')
             self.trainset = MDS_Entity(csv_file=os.path.join(self.path, 'training_set.csv'), \
                                        root_dir=os.path.join(self.path, 'Training_set'), \
-                                       transform=self.transform)
+                                       transform=self.train_transform)
 
         if valid:
             sys.stderr.write('Loading validation set...\n')
             self.validset = MDS_Entity(csv_file=os.path.join(self.path, 'validation_set.csv'), \
                                        root_dir=os.path.join(self.path, 'Validation_set'), \
-                                       transform=self.transform)
+                                       transform=self.eval_transform)
 
         if test:
             sys.stderr.write('Loading test set...\n')
             self.testset = MDS_Entity(csv_file=os.path.join(self.path, 'test_set.csv'), \
                                        root_dir=os.path.join(self.path, 'Test_set'), \
-                                       transform=self.transform, test=True)
+                                       transform=self.eval_transform, test=True)
         
         self.__sets__ = {'train': train, 'validation': valid, 'test': test}
         sys.stderr.write('Melanoma DataSet Ready: {}\n'.format([key for key in self.__sets__ if self.__sets__[key]]))
@@ -141,6 +158,8 @@ def testSamplingSpeed(ds, batch_size, shuffle, tag, num_workers=4):
         samples, metas, labels = batch['image'], batch['meta'], batch['target']
         sys.stderr.write("\r{} Set - Batch No. {}/{} with time used(s): {}, {}".format(tag, i + 1, len(dataloader), time.time() - time0, samples.size()))
         sys.stderr.flush()
+        #if i == 0:
+        #    print(samples)
 
     sys.stderr.write("\n")
 
@@ -156,7 +175,7 @@ if __name__ == '__main__':
     FLAGS, unparsed = parser.parse_known_args()
     print('Running with {} workers.'.format(FLAGS.cores))
 
-    dataset = MelanomaDataSet(path=Config.DATA_DIR_DEFAULT, transform=Config.image_transform)
+    dataset = MelanomaDataSet(path=Config.DATA_DIR_DEFAULT, train_transform=Config.train_transform, eval_transform=Config.eval_transform)
     testSamplingSpeed(dataset.trainset, 32, True, "Training", FLAGS.cores)
     testSamplingSpeed(dataset.validset, 16, False, "Validation", FLAGS.cores)
     testSamplingSpeed(dataset.testset, 16, False, "Test", FLAGS.cores)

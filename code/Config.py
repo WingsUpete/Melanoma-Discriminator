@@ -7,22 +7,29 @@
 from torchvision import transforms
 
 # Settings
-image_transform = transforms.Compose([ \
-    transforms.RandomResizedCrop(size=256, scale=(0.8, 1.0)), \
-    transforms.RandomHorizontalFlip(), \
-    transforms.RandomVerticalFlip(), \
+train_transform = transforms.Compose([ \
+    transforms.RandomResizedCrop(size=224, scale=(0.9, 1.0)), \
     transforms.ToTensor(), \
-    transforms.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)) # standard for EfficientNet \
+    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]) # standard for EfficientNet \
+])
+#    transforms.RandomHorizontalFlip(), \
+#    transforms.RandomVerticalFlip(), \
+
+eval_transform = transforms.Compose([ \
+    transforms.RandomResizedCrop(size=224, scale=(0.9, 1.0)), \
+    transforms.ToTensor(), \
+    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]) # standard for EfficientNet \
 ])
 
 # Default values
 LEARNING_RATE_DEFAULT = 1e-3
 BATCH_SIZE_DEFAULT = 32
-MAX_EPOCHS_DEFAULT = 5000
-EVAL_FREQ_DEFAULT = 500
+MAX_EPOCHS_DEFAULT = 100
+EVAL_FREQ_DEFAULT = 5
 OPTIMIZER_DEFAULT = 'ADAM'
 WEIGHT_DECAY_DEFAULT = 0.01
 DATA_DIR_DEFAULT = 'DataSet'
 LOG_DEFAULT = 'log'
 WORKERS_DEFAULT = 4
 USE_GPU_DEFAULT = True
+EFNET_VER_DEFAULT = 1
