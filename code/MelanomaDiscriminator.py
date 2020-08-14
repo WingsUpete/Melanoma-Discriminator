@@ -74,7 +74,7 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
     stdLog(sys.stdout, "eval_freq = {}, minibatch_size = {}, optimizer = {}\n".format(eval_freq, minibatch_size, optimizer), DEBUG, fd)
     stdLog(sys.stdout, "Using EfficientNet {}\n".format(ef_ver), DEBUG, fd)
 
-    stdLog(sys.stdout, "--------------------------------------------------------\n", DEBUG, fd)
+    stdLog(sys.stdout, "------------------------------------------------------------\n", DEBUG, fd)
     
     for epoch_i in range(max_epoch):
         # train one round
@@ -106,7 +106,6 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
             net.eval()
             with torch.no_grad():
                 val_pred_list = torch.zeros((len(dataset.validset)))
-                val_pred_list = val_pred_list.to(device)
                 val_correct = 0
                 # Evaluate using the validation set
                 for j, val_batch in enumerate(validloader):
@@ -119,6 +118,7 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
 
                     val_res = torch.sigmoid(val_res)
                     val_pred_list[j * validloader.batch_size : j * validloader.batch_size + len(val_samples)] = val_res
+                val_pred_list = val_pred_list.to(device)
                 val_label_list = dataset.validset.label_list.type_as(val_pred_list)
                 val_label_list = val_label_list.to(device)
                 val_acc = accuracy_score(val_label_list, torch.round(val_pred_list))    # accuracy on threshold value = 0.5
