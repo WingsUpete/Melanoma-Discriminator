@@ -99,12 +99,23 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
         stdLog(sys.stdout, 'Training Round %d: acc = %.2f%%, loss = %.2f\n' % (epoch_i, train_acc, loss.item()), DEBUG, fd)
     
         # evaluate every eval_freq
-        #if (epoch_i % eval_freq == 0):
-        #    net.eval()
-        #    with torch.no_grad():
-        #        #print("epoch = %d,\ttraining_set_accuracy = %.2f%%, training_set_loss = %.2f, test_set_accuracy = %.2f%%, test_set_loss = %.2f" % \
-        #        #      (epoch_i, training_set_accuracy*100, training_set_loss, test_set_accuracy*100, test_set_loss))
-        #        pass
+        if (epoch_i % eval_freq == 0):
+            net.eval()
+            val_correct = 0
+            with torch.no_grad():
+                # Evaluate using the validation set
+                for j, val_batch in enumerate(validloader):
+                    val_samples, val_metas, val_labels = val_batch['image'], val_batch['meta'], val_batch['target']
+                    if device:
+                        val_samples, val_labels = val_samples.to(device), val_labels.to(device)
+                    val_res = net(val_samples)
+                    val_res = val_res.reshape(-1)
+                    val_labels = val_labels.type_as(val_res)
+                    val_preds = torch.round(torch.sigmoid(val_res))
+                    val_correct += (val_preds == val_labels).sum().item()
+                val_total = len(dataset.validset)
+                val_acc = val_correct / val_total
+                stdLog(sys.stdout, '!!! Validation : acc = %.2f%%' % (val_acc), DEBUG, fd)
     
 if __name__ == '__main__':
     # Command Line Arguments
