@@ -92,15 +92,13 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
             torch.nn.utils.clip_grad_norm_(net.parameters(), max_norm=Config.MAX_NORM_DEFAULT)
 
             optimizer.zero_grad()
-            res = net(samples)
-            res = res.reshape(-1)           # [[1], [2], [3]] -> [1, 2, 3]
-            labels = labels.type_as(res)    # BCEWithLogitsLoss does not support Long
-            loss = criterion(res, labels)
+            res = net(samples)              # [[1], [2], [3]]
+            loss = criterion(res, labels.type_as(res).reshape(-1, 1))  # BCEWithLogitsLoss does not support Long
             loss.backward()
             optimizer.step()
 
             preds = torch.round(torch.sigmoid(res)) # set threshold to be 0.5 so that values below 0.5 will be considered 0
-            train_correct += (preds == labels).sum().item()
+            train_correct += (preds == labels.type_as(res).reshape(-1, 1)).sum().item()
             train_loss += loss.item()
         train_total = len(dataset.trainset)
         train_acc = train_correct / train_total
@@ -118,12 +116,9 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
                     if device:
                         val_samples, val_labels = val_samples.to(device), val_labels.to(device)
                     val_res = net(val_samples)
-                    val_res = val_res.reshape(-1)
-                    val_labels = val_labels.type_as(val_res)
-
-                    val_res = torch.sigmoid(val_res)
-                    val_pred_list[j * validloader.batch_size : j * validloader.batch_size + len(val_samples)] = val_res
-                val_label_list = dataset.validset.label_list.type_as(val_pred_list)
+                    val_pred = torch.sigmoid(val_res)
+                    val_pred_list[j * validloader.batch_size : j * validloader.batch_size + len(val_samples)] = val_pred
+                val_label_list = dataset.validset.label_list.type_as(val_pred_list).reshape(-1, 1)
                 val_acc = accuracy_score(val_label_list.cpu(), torch.round(val_pred_list.cpu()))    # accuracy on threshold value = 0.5
                 val_roc_auc = roc_auc_score(val_label_list.cpu(), val_pred_list.cpu())               # AUC score
                 stdLog(sys.stdout, '!!! Validation : acc = %.2f%%, roc_auc = %.2f%% !!!\n' % (val_acc * 100, val_roc_auc * 100), DEBUG, fd)
