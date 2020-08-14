@@ -8,7 +8,7 @@ from torchvision import transforms
 
 # Settings
 train_transform = transforms.Compose([ \
-    transforms.RandomResizedCrop(size=240, scale=(0.95, 1.0)), \
+    transforms.RandomResizedCrop(size=240, scale=(0.9, 1.0)), \
     transforms.ToTensor(), \
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]) # standard for EfficientNet \
 ])
@@ -17,7 +17,7 @@ train_transform = transforms.Compose([ \
 #    transforms.RandomVerticalFlip(), \
 
 eval_transform = transforms.Compose([ \
-    transforms.RandomResizedCrop(size=240, scale=(1.0, 1.0)), \
+    transforms.CenterCrop(size=240), \
     transforms.ToTensor(), \
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]) # standard for EfficientNet \
 ])
@@ -25,7 +25,7 @@ eval_transform = transforms.Compose([ \
 # Default values
 LEARNING_RATE_DEFAULT = 1e-3    # TODO: test with 1e-2
 BATCH_SIZE_DEFAULT = 32
-MAX_EPOCHS_DEFAULT = 500
+MAX_EPOCHS_DEFAULT = 666
 EVAL_FREQ_DEFAULT = 5
 OPTIMIZER_DEFAULT = 'ADAM'
 WEIGHT_DECAY_DEFAULT = 0.01
@@ -34,4 +34,4 @@ LOG_DEFAULT = 'log'
 WORKERS_DEFAULT = 4
 USE_GPU_DEFAULT = True
 EFNET_VER_DEFAULT = 1
-MAX_NORM_DEFAULT = 10.0     # TODO: test with 1.0
+MAX_NORM_DEFAULT = 1.0
