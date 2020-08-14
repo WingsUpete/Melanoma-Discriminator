@@ -68,10 +68,10 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
     # Start Training
     stdLog(sys.stdout, "Start Training!\n", DEBUG, fd)
 
-    stdLog(sys.stdout, "learning_rate = {}, max_epoch = {}\n".format(learning_rate, max_epoch), DEBUG, fd)
+    stdLog(sys.stdout, "learning_rate = {}, max_epoch = {}, num_workers = {}\n".format(learning_rate, max_epoch, num_workers), DEBUG, fd)
     stdLog(sys.stdout, "eval_freq = {}, minibatch_size = {}, optimizer = {}\n".format(eval_freq, minibatch_size, optimizer), DEBUG, fd)
 
-    stdLog(sys.stdout, "------------------------\n", DEBUG, fd)
+    stdLog(sys.stdout, "------------------------------------------------------------------\n", DEBUG, fd)
     
     for epoch_i in range(max_epoch):
         # SGD_once
@@ -81,6 +81,7 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
                 samples, labels = samples.to(device), labels.to(device)
             optimizer.zero_grad()
             res = net(samples)
+            print(res, '|', labels)
             loss = criterion(res, labels)
             loss.backward()
             print(res, '|', labels, '|', loss)
