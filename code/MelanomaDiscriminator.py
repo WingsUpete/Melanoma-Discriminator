@@ -36,14 +36,15 @@ def stdLog(stdwhich, str, DEBUG=True, fd=None):
 
 def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATCH_SIZE_DEFAULT, ef_ver=Config.EFNET_VER_DEFAULT, \
           max_epoch=Config.MAX_EPOCHS_DEFAULT,  eval_freq=Config.EVAL_FREQ_DEFAULT, optimizer=Config.OPTIMIZER_DEFAULT, \
-          num_workers=Config.WORKERS_DEFAULT, use_gpu=True, folder=Config.DATA_DIR_DEFAULT, DEBUG=True, fd=None, time_tag='WHEN'):
+          num_workers=Config.WORKERS_DEFAULT, use_gpu=True, folder=Config.DATA_DIR_DEFAULT, DEBUG=True, fd=None, time_tag='WHEN', \
+          rs=Config.RESIZE_DEFAULT):
     """
     Performs training and evaluation of the CNN model.
     """
 
     # Load Melanoma Datast
     stdLog(sys.stdout, "Loading Melanoma Dataset...\n", DEBUG, fd)
-    dataset = MelanomaDataSet(folder, train_transform=Config.train_transform, eval_transform=Config.eval_transform)
+    dataset = MelanomaDataSet(folder, train_transform=Config.get_train_transform(rs), eval_transform=Config.get_eval_transform(rs))
     trainloader = DataLoader(dataset.trainset, batch_size=minibatch_size, shuffle=True, num_workers=num_workers)
     validloader = DataLoader(dataset.validset, batch_size=minibatch_size, shuffle=False, num_workers=num_workers)
     testloader = DataLoader(dataset.testset, batch_size=minibatch_size, shuffle=False, num_workers=num_workers)
@@ -71,10 +72,11 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
 
     # Start Training
     stdLog(sys.stdout, "Start Training!\n", DEBUG, fd)
-
+    
+    stdLog(sys.stdout, "Using EfficientNet {}, images resized to size = {}\n".format(ef_ver, rs), DEBUG, fd)
     stdLog(sys.stdout, "learning_rate = {}, max_epoch = {}, num_workers = {}\n".format(learning_rate, max_epoch, num_workers), DEBUG, fd)
     stdLog(sys.stdout, "eval_freq = {}, minibatch_size = {}, optimizer = {}\n".format(eval_freq, minibatch_size, optimizer), DEBUG, fd)
-    stdLog(sys.stdout, "Using EfficientNet {}\n".format(ef_ver), DEBUG, fd)
+    stdLog(sys.stdout, "train_transform = {}, eval_transform = {}\n".format(dataset.train_transform, dataset.eval_transform), DEBUG, fd)
 
     stdLog(sys.stdout, "------------------------------------------------------------\n", DEBUG, fd)
     
@@ -154,6 +156,8 @@ if __name__ == '__main__':
                         help='Specify whether to use GPU, default={}'.format(Config.USE_GPU_DEFAULT))
     parser.add_argument('-ev', '--efnet_version', type=int, default=Config.EFNET_VER_DEFAULT, \
                         help='The version of EfficientNet to be used, default={}'.format(Config.EFNET_VER_DEFAULT))
+    parser.add_argument('-rs', '--resize', type=int, default=Config.RESIZE_DEFAULT, \
+                        help='The resized size of image, default={}'.format(Config.RESIZE_DEFAULT))
 
     FLAGS, unparsed = parser.parse_known_args()
 
@@ -169,4 +173,4 @@ if __name__ == '__main__':
 
     train(learning_rate = FLAGS.learning_rate, minibatch_size = FLAGS.minibatch_size, max_epoch = FLAGS.max_steps, \
           ef_ver=FLAGS.efnet_version, eval_freq = FLAGS.eval_freq, optimizer = FLAGS.optimizer, num_workers=FLAGS.cores, \
-          use_gpu = FLAGS.gpu, folder = FLAGS.data_dir, DEBUG = True, fd = fd, time_tag=time_tag)
+          use_gpu = FLAGS.gpu, folder = FLAGS.data_dir, DEBUG = True, fd = fd, time_tag=time_tag, rs = FLAGS.resize)

@@ -175,7 +175,7 @@ if __name__ == '__main__':
     FLAGS, unparsed = parser.parse_known_args()
     print('Running with {} workers.'.format(FLAGS.cores))
 
-    dataset = MelanomaDataSet(path=Config.DATA_DIR_DEFAULT, train_transform=Config.train_transform, eval_transform=Config.eval_transform)
+    dataset = MelanomaDataSet(path=Config.DATA_DIR_DEFAULT, train_transform=Config.get_train_transform(), eval_transform=Config.get_eval_transform())
     testSamplingSpeed(dataset.trainset, 32, True, "Training", FLAGS.cores)
     testSamplingSpeed(dataset.validset, 16, False, "Validation", FLAGS.cores)
     testSamplingSpeed(dataset.testset, 16, False, "Test", FLAGS.cores)

@@ -7,17 +7,19 @@
 from torchvision import transforms
 
 # Settings
-train_transform = transforms.Compose([ \
-    transforms.RandomResizedCrop(size=240, scale=(0.85, 1.0)), \
-    transforms.ToTensor(), \
-    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]) # standard for EfficientNet \
-])
+def get_train_transform(img_resize=240):
+    return transforms.Compose([ \
+        transforms.RandomResizedCrop(size=img_resize, scale=(0.85, 1.0)), \
+        transforms.ToTensor(), \
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]) # standard for EfficientNet \
+        ])
 
-eval_transform = transforms.Compose([ \
-    transforms.RandomResizedCrop(size=240, scale=(0.996, 1.0)), \
-    transforms.ToTensor(), \
-    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]) \
-])
+def get_eval_transform(img_resize=240):
+    return transforms.Compose([ \
+        transforms.RandomResizedCrop(size=img_resize, scale=(0.996, 1.0)), \
+        transforms.ToTensor(), \
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]) \
+        ])
 
 # Default values
 LEARNING_RATE_DEFAULT = 1e-3
@@ -33,3 +35,4 @@ WORKERS_DEFAULT = 4
 USE_GPU_DEFAULT = True
 EFNET_VER_DEFAULT = 1
 MAX_NORM_DEFAULT = 10.0
+RESIZE_DEFAULT = 240
