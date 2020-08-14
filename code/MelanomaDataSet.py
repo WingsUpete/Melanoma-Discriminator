@@ -46,6 +46,13 @@ class MDS_Entity(Dataset):
         self.root_dir = root_dir
         self.transform = transform
         self.test = test
+        self.label_list = []
+        if not self.test:
+            for i in range(len(self.data_frame)):
+                self.label_list.append(MDS_Entity.tryConvertFloat(self.data_frame.iloc[i, 6]))
+            self.label_list = torch.Tensor(self.label_list)
+        else:
+            self.label_list = None
 
     def __len__(self):
         return len(self.data_frame)
