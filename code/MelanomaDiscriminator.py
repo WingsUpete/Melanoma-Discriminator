@@ -56,6 +56,8 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
     # Select Optimizer
     if optimizer == 'ADAM':
         optimizer = torch.optim.Adam(net.parameters(), learning_rate, weight_decay=Config.WEIGHT_DECAY_DEFAULT)    # Adam + L2 Norm
+    elif optimizer == 'RMSprop':
+        optimizer = torch.optim.RMSprop(net.parameters(), learning_rate, weight_decay=Config.WEIGHT_DECAY_DEFAULT)
     else:
         optimizer = torch.optim.Adam(net.parameters(), learning_rate, weight_decay=Config.WEIGHT_DECAY_DEFAULT)    # Default: Adam + L2 Norm
 
@@ -85,6 +87,9 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
             samples, metas, labels = batch['image'], batch['meta'], batch['target']
             if device:
                 samples, labels = samples.to(device), labels.to(device)
+
+            # the following line is to deal with exploding gradients
+            torch.nn.utils.clip_grad_norm_(net.parameters(), max_norm=Config.MAX_NORM_DEFAULT)
 
             optimizer.zero_grad()
             res = net(samples)
@@ -135,7 +140,7 @@ if __name__ == '__main__':
     parser.add_argument('-bs', '--minibatch_size', type = int, default = Config.BATCH_SIZE_DEFAULT, \
                         help='Size of a minibatch, default = {}'.format(Config.BATCH_SIZE_DEFAULT))
     parser.add_argument('-opt', '--optimizer', type = str, default = Config.OPTIMIZER_DEFAULT, \
-                        help='Optimizer to be used, default = {}'.format(Config.OPTIMIZER_DEFAULT))
+                        help='Optimizer to be used [Adam, RMSprop], default = {}'.format(Config.OPTIMIZER_DEFAULT))
     parser.add_argument('-dr', '--data_dir', type = str, default = Config.DATA_DIR_DEFAULT, \
                         help='Root directory of the input data, default = {}'.format(Config.DATA_DIR_DEFAULT))
     parser.add_argument('-log', '--log', type = str, default = Config.LOG_DEFAULT, \
