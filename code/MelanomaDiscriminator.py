@@ -108,8 +108,7 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
         if (epoch_i % eval_freq == 0):
             net.eval()
             with torch.no_grad():
-                val_pred_list = torch.zeros((len(dataset.validset)))
-                val_pred_list = val_pred_list.to(device)
+                val_pred_list = torch.zeros((len(dataset.validset), 1)).to(device)
                 # Evaluate using the validation set
                 for j, val_batch in enumerate(validloader):
                     val_samples, val_metas, val_labels = val_batch['image'], val_batch['meta'], val_batch['target']
