@@ -25,74 +25,6 @@ warnings.filterwarnings("ignore")
 
 import Config
 
-class Rescale(object):
-    """
-    Rescale the image in a sample to a given size
-    Args:
-        output_size (tuple or int): Desired output size. If tuple, output is
-            matched to output_size. If int, smaller of image edges is matched
-            to output_size keeping aspect ratio the same.
-    """
-
-    def __init__(self, output_size):
-        assert isinstance(output_size, (int, tuple))
-        self.output_size = output_size
-
-    def __call__(self, sample):
-        image = sample
-
-        w, h = image.size
-        if isinstance(self.output_size, int):
-            if w < h:
-                new_w, new_h = self.output_size, self.output_size * h / w
-            else:
-                new_w, new_h = self.output_size * w / h, self.output_size
-        else:
-            new_w, new_h = self.output_size
-
-        new_w, new_h = int(new_w), int(new_h)
-        img = image.resize((new_w, new_h))
-
-        return img
-
-class RandomCrop(object):
-    """ 
-    Crop randomly the image in a sample.
-    Args:
-        output_size (tuple or int): Desired output size. If int, square crop
-            is made.
-    """
-    def __init__(self, output_size):
-        assert isinstance(output_size, (int, tuple))
-        if isinstance(output_size, int):
-            self.output_size = (output_size, output_size)
-        else:
-            assert len(output_size) == 2
-            self.output_size = output_size
-
-    def __call__(self, sample):
-        image = sample
-
-        w, h = image.size
-        new_w, new_h = self.output_size
-        
-        left = np.random.randint(0, w - new_w)
-        top = np.random.randint(0, h - new_h)
-
-        image = image.crop((left, top, left + new_w, top + new_h))
-        
-        return image
-
-class ToTensor(object):
-    """ Convert ndarrays in sample to Tensors. """
-
-    def __call__(self, sample):
-        image = sample
-
-        tt = transforms.ToTensor()
-        image = tt(image)
-        return image
-
 class MDS_Entity(Dataset):
     """
     Melanoma DataSet Entity (Training / Validation / Test) 
@@ -124,19 +56,43 @@ class MDS_Entity(Dataset):
         img_name = '{}.jpg'.format(os.path.join(self.root_dir, \
                                 self.data_frame.iloc[idx, 0]))
         image = Image.open(img_name)
-        label = self.data_frame.iloc[idx, 6] if not self.test else -1
 
         if self.transform:
             image = self.transform(image)
 
+        label = self.data_frame.iloc[idx, 6] if not self.test else -1
+        meta = { \
+            "image_name": str(self.data_frame.iloc[idx, 0]), \
+            "sex": str(self.data_frame.iloc[idx, 1]), \
+            "age_approx": MDS_Entity.tryConvertInt(self.data_frame.iloc[idx, 2]), \
+            "anatom_site_general_challenge": str(self.data_frame.iloc[idx, 3]) \
+            } if self.test else { \
+            "image_name": str(self.data_frame.iloc[idx, 0]), \
+            "sex": str(self.data_frame.iloc[idx, 1]), \
+            "age_approx": MDS_Entity.tryConvertInt(self.data_frame.iloc[idx, 2]), \
+            "anatom_site_general_challenge": str(self.data_frame.iloc[idx, 3]), \
+            "diagnosis": str(self.data_frame.iloc[idx, 4]), \
+            "benign_malignant": str(self.data_frame.iloc[idx, 5]), \
+            "target": MDS_Entity.tryConvertInt(self.data_frame.iloc[idx, 6]) \
+            }
+
         # return data & label
-        sample = {'image': image, 'target': label}
+        sample = {'image': image, 'meta': meta, 'target': label}
         return sample
+
+    def tryConvertInt(str):
+        """
+        Helper function: convert a string into an integer. If fails, return -1 instead
+        """
+        try:
+            return int(str)
+        except ValueError:
+            return -1
 
 class MelanomaDataSet:
     """ Melanoma DataSet """
 
-    def __init__(self, path, train=True, valid=True, test=True):
+    def __init__(self, path, transform=None, train=True, valid=True, test=True):
         """
         Inputs:
             train, valid, test (Boolean): whether the training set, validation set, test set
@@ -144,7 +100,8 @@ class MelanomaDataSet:
             transform (Boolean): whether the sample should be transformed on the fly
         Args:
             path (string): root directory of data set
-            transform (transforms.Compose): transform function
+            rescale (int): rescale dimension for transform
+            randCrop (int): random crop dimension for transform
             trainset (MDS_Entity): training set instance
             validset (MDS_Entity): validation set instance
             testset (MDS_Entity): test set instance
@@ -152,11 +109,7 @@ class MelanomaDataSet:
         """
         self.path = path
 
-        self.transform = transforms.Compose([
-            Rescale(512), \
-            RandomCrop(500), \
-            ToTensor() \
-        ])
+        self.transform = transform
 
         if train:
             sys.stderr.write('Loading training set...\n')
@@ -179,24 +132,20 @@ class MelanomaDataSet:
         self.__sets__ = {'train': train, 'validation': valid, 'test': test}
         sys.stderr.write('Melanoma DataSet Ready: {}\n'.format([key for key in self.__sets__ if self.__sets__[key]]))
 
-def testSamplingSpeed(ds, batch_size, shuffle, tag):
-    dataloader = DataLoader(ds, batch_size=batch_size, shuffle=shuffle, num_workers=4)
+def testSamplingSpeed(ds, batch_size, shuffle, tag, num_workers=4):
+    dataloader = DataLoader(ds, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers)
     time0 = time.time()
 
     for i, batch in enumerate(dataloader):
-        samples, labels = batch['image'], batch['target']
-        if device:
-            samples, labels = samples.to(device), labels.to(device)
-        sys.stderr.write("\r{} Set - Batch No. {}/{} with time used(s): {}".format(tag, i + 1, len(dataloader), time.time() - time0))
+        samples, metas, labels = batch['image'], batch['meta'], batch['target']
+        sys.stderr.write("\r{} Set - Batch No. {}/{} with time used(s): {}, {}".format(tag, i + 1, len(dataloader), time.time() - time0, samples.size()))
         sys.stderr.flush()
+
     sys.stderr.write("\n")
 
 if __name__ == '__main__':
-    device = torch.device("cuda:0" if (torch.cuda.is_available()) else "cpu")
-    print("device: {}".format(device))
-
-    dataset = MelanomaDataSet(Config.DATA_DIR_DEFAULT)
-    
-    testSamplingSpeed(dataset.trainset, 10, True, "Training")
-    testSamplingSpeed(dataset.validset, 5, False, "Validation")
-    testSamplingSpeed(dataset.testset, 5, False, "Test")
+    dataset = MelanomaDataSet(path=Config.DATA_DIR_DEFAULT, transform=Config.image_transform)
+    num_workers = 4
+    testSamplingSpeed(dataset.trainset, 32, True, "Training", num_workers)
+    testSamplingSpeed(dataset.validset, 16, False, "Validation", num_workers)
+    testSamplingSpeed(dataset.testset, 16, False, "Test", num_workers)
