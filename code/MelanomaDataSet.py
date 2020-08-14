@@ -74,7 +74,7 @@ class MDS_Entity(Dataset):
             "anatom_site_general_challenge": str(self.data_frame.iloc[idx, 3]), \
             "diagnosis": str(self.data_frame.iloc[idx, 4]), \
             "benign_malignant": str(self.data_frame.iloc[idx, 5]), \
-            "target": MDS_Entity.tryConvertInt(self.data_frame.iloc[idx, 6]) \
+            "target": MDS_Entity.tryConvertFloat(self.data_frame.iloc[idx, 6]) \
             }
 
         # return data & label
@@ -89,6 +89,15 @@ class MDS_Entity(Dataset):
             return int(str)
         except ValueError:
             return -1
+
+    def tryConvertFloat(str):
+        """
+        Helper function: convert a string into an float. If fails, return -1.0 instead
+        """
+        try:
+            return float(str)
+        except ValueError:
+            return -1.0
 
 class MelanomaDataSet:
     """ Melanoma DataSet """
