@@ -8,7 +8,7 @@ from torchvision import transforms
 
 # Settings
 image_transform = transforms.Compose([ \
-    transforms.RandomResizedCrop(size=256, scale=(0.8, 1.0)), \
+    transforms.Resize(256), \
     transforms.RandomHorizontalFlip(), \
     transforms.RandomVerticalFlip(), \
     transforms.ToTensor(), \

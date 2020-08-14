@@ -113,6 +113,8 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
                     val_labels = val_labels.type_as(val_res)
                     val_preds = torch.round(torch.sigmoid(val_res))
                     val_correct += (val_preds == val_labels).sum().item()
+                    if j == 0:
+                        print(val_res, val_labels)
                 val_total = len(dataset.validset)
                 val_acc = val_correct / val_total
                 stdLog(sys.stdout, '!!! Validation : acc = %.2f%%\n' % (val_acc * 100), DEBUG, fd)
