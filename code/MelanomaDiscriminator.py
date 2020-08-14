@@ -80,8 +80,10 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
             if device:
                 samples, labels = samples.to(device), labels.to(device)
             optimizer.zero_grad()
+            print(samples)
             res = net(samples)
             res = res.reshape(-1)
+            labels = labels.type_as(res)
             print(res, '|', labels)
             loss = criterion(res, labels)
             loss.backward()
