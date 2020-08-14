@@ -93,7 +93,7 @@ class MDS_Entity(Dataset):
 class MelanomaDataSet:
     """ Melanoma DataSet """
 
-    def __init__(self, path, transform=None, train=True, valid=True, test=True):
+    def __init__(self, path, train_transform=None, eval_transform=None, train=True, valid=True, test=True):
         """
         Inputs:
             train, valid, test (Boolean): whether the training set, validation set, test set
@@ -110,25 +110,26 @@ class MelanomaDataSet:
         """
         self.path = path
 
-        self.transform = transform
+        self.train_transform = train_transform
+        self.eval_transform = eval_transform
 
         if train:
             sys.stderr.write('Loading training set...\n')
             self.trainset = MDS_Entity(csv_file=os.path.join(self.path, 'training_set.csv'), \
                                        root_dir=os.path.join(self.path, 'Training_set'), \
-                                       transform=self.transform)
+                                       transform=self.train_transform)
 
         if valid:
             sys.stderr.write('Loading validation set...\n')
             self.validset = MDS_Entity(csv_file=os.path.join(self.path, 'validation_set.csv'), \
                                        root_dir=os.path.join(self.path, 'Validation_set'), \
-                                       transform=self.transform)
+                                       transform=self.eval_transform)
 
         if test:
             sys.stderr.write('Loading test set...\n')
             self.testset = MDS_Entity(csv_file=os.path.join(self.path, 'test_set.csv'), \
                                        root_dir=os.path.join(self.path, 'Test_set'), \
-                                       transform=self.transform, test=True)
+                                       transform=self.eval_transform, test=True)
         
         self.__sets__ = {'train': train, 'validation': valid, 'test': test}
         sys.stderr.write('Melanoma DataSet Ready: {}\n'.format([key for key in self.__sets__ if self.__sets__[key]]))
@@ -156,7 +157,7 @@ if __name__ == '__main__':
     FLAGS, unparsed = parser.parse_known_args()
     print('Running with {} workers.'.format(FLAGS.cores))
 
-    dataset = MelanomaDataSet(path=Config.DATA_DIR_DEFAULT, transform=Config.image_transform)
+    dataset = MelanomaDataSet(path=Config.DATA_DIR_DEFAULT, train_transform=Config.train_transform, eval_transform=Config.eval_transform)
     testSamplingSpeed(dataset.trainset, 32, True, "Training", FLAGS.cores)
     testSamplingSpeed(dataset.validset, 16, False, "Validation", FLAGS.cores)
     testSamplingSpeed(dataset.testset, 16, False, "Test", FLAGS.cores)
