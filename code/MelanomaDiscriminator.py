@@ -18,7 +18,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 
-from sklearn.metrics import accuracy_score, roc_auc_score
+from sklearn.metrics import accuracy_score, roc_auc_score, roc_curve
 
 from MelanomaDataSet import MelanomaDataSet
 from MelanomaModel import Net
@@ -45,8 +45,8 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
     stdLog(sys.stdout, "Loading Melanoma Dataset...\n", DEBUG, fd)
     dataset = MelanomaDataSet(folder, train_transform=Config.train_transform, eval_transform=Config.eval_transform)
     trainloader = DataLoader(dataset.trainset, batch_size=minibatch_size, shuffle=True, num_workers=num_workers)
-    validloader = DataLoader(dataset.validset, batch_size=int(minibatch_size/2), shuffle=False, num_workers=num_workers)
-    testloader = DataLoader(dataset.testset, batch_size=int(minibatch_size/2), shuffle=False, num_workers=num_workers)
+    validloader = DataLoader(dataset.validset, batch_size=minibatch_size, shuffle=False, num_workers=num_workers)
+    testloader = DataLoader(dataset.testset, batch_size=minibatch_size, shuffle=False, num_workers=num_workers)
 
     # Initialize the model
     stdLog(sys.stdout, "Initializing the Training Model...\n", DEBUG, fd)
@@ -120,6 +120,7 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
                 val_label_list = dataset.validset.label_list.type_as(val_pred_list).reshape(-1, 1)
                 val_acc = accuracy_score(val_label_list.cpu(), torch.round(val_pred_list.cpu()))    # accuracy on threshold value = 0.5
                 val_roc_auc = roc_auc_score(val_label_list.cpu(), val_pred_list.cpu())               # AUC score
+
                 stdLog(sys.stdout, '!!! Validation : acc = %.2f%%, roc_auc = %.2f%% !!!\n' % (val_acc * 100, val_roc_auc * 100), DEBUG, fd)
     
 if __name__ == '__main__':
