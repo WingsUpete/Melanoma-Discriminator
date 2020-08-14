@@ -24,7 +24,7 @@ class Net(nn.Module):
         super(Net, self).__init__()
         self.efnet = EfficientNet.from_pretrained('efficientnet-b1')
         #ef_last_fc_in_features = self.efnet._fc.in_features     # 1280 for b1
-        ef_last_fc_out_features = self.efnet._fc.in_features        # 1000 for b1
+        ef_last_fc_out_features = self.efnet._fc.out_features        # 1000 for b1
         #self.efnet._fc = nn.Linear(in_features=ef_last_fc_in_features, out_features=ef_last_fc_out_features, bias=True)
         self.midproc = nn.Linear(ef_last_fc_out_features, 500)
         self.output = nn.Linear(500, 1)
