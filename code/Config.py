@@ -23,8 +23,8 @@ eval_transform = transforms.Compose([ \
 ])
 
 # Default values
-LEARNING_RATE_DEFAULT = 1e-3    # TODO: test with 1e-2
-BATCH_SIZE_DEFAULT = 64
+LEARNING_RATE_DEFAULT = 1e-2    # TODO: test with 1e-2
+BATCH_SIZE_DEFAULT = 32
 MAX_EPOCHS_DEFAULT = 666
 EVAL_FREQ_DEFAULT = 5
 OPTIMIZER_DEFAULT = 'RMSprop'
