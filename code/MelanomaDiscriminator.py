@@ -32,7 +32,7 @@ def stdLog(stdwhich, str, DEBUG=True, fd=None):
     if DEBUG:
         stdwhich.write(str)
 
-def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATCH_SIZE_DEFAULT, 
+def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATCH_SIZE_DEFAULT, ef_ver=Config.EFNET_VER_DEFAULT, \
           max_epoch=Config.MAX_EPOCHS_DEFAULT,  eval_freq=Config.EVAL_FREQ_DEFAULT, optimizer=Config.OPTIMIZER_DEFAULT, \
           num_workers=Config.WORKERS_DEFAULT, use_gpu=True, folder=Config.DATA_DIR_DEFAULT, DEBUG=True, fd=None):
     """
@@ -48,7 +48,7 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
 
     # Initialize the model
     stdLog(sys.stdout, "Initializing the Training Model...\n", DEBUG, fd)
-    net = Net()
+    net = Net(efnet_version=ef_ver)
     criterion = nn.BCEWithLogitsLoss()
 
     # Select Optimizer
@@ -70,6 +70,7 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
 
     stdLog(sys.stdout, "learning_rate = {}, max_epoch = {}, num_workers = {}\n".format(learning_rate, max_epoch, num_workers), DEBUG, fd)
     stdLog(sys.stdout, "eval_freq = {}, minibatch_size = {}, optimizer = {}\n".format(eval_freq, minibatch_size, optimizer), DEBUG, fd)
+    stdLog(sys.stdout, "Using EfficientNet {}\n".format(ef_ver), DEBUG, fd)
 
     stdLog(sys.stdout, "------------------------------------------------------------------\n", DEBUG, fd)
     
@@ -138,6 +139,8 @@ if __name__ == '__main__':
                         help='number of workers (cores used), default={}'.format(Config.WORKERS_DEFAULT))
     parser.add_argument('-gpu', '--gpu', type=bool, default=Config.USE_GPU_DEFAULT, \
                         help='Specify whether to use GPU, default={}'.format(Config.USE_GPU_DEFAULT))
+    parser.add_argument('-ev', '--efnet_version', type=int, default=Config.EFNET_VER_DEFAULT, \
+                        help='The version of EfficientNet to be used, default={}'.format(Config.EFNET_VER_DEFAULT))
 
     FLAGS, unparsed = parser.parse_known_args()
 
@@ -150,5 +153,5 @@ if __name__ == '__main__':
         fd = None
 
     train(learning_rate = FLAGS.learning_rate, minibatch_size = FLAGS.minibatch_size, max_epoch = FLAGS.max_steps, \
-          eval_freq = FLAGS.eval_freq, optimizer = FLAGS.optimizer, num_workers=FLAGS.cores, use_gpu = FLAGS.gpu, \
-          folder = FLAGS.data_dir, DEBUG = True, fd = fd)
+          ef_ver=FLAGS.efnet_version, eval_freq = FLAGS.eval_freq, optimizer = FLAGS.optimizer, num_workers=FLAGS.cores, \
+          use_gpu = FLAGS.gpu, folder = FLAGS.data_dir, DEBUG = True, fd = fd)

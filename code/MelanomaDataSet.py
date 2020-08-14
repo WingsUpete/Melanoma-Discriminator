@@ -142,6 +142,8 @@ def testSamplingSpeed(ds, batch_size, shuffle, tag, num_workers=4):
         samples, metas, labels = batch['image'], batch['meta'], batch['target']
         sys.stderr.write("\r{} Set - Batch No. {}/{} with time used(s): {}, {}".format(tag, i + 1, len(dataloader), time.time() - time0, samples.size()))
         sys.stderr.flush()
+        #if i == 0:
+        #    print(samples)
 
     sys.stderr.write("\n")
 
