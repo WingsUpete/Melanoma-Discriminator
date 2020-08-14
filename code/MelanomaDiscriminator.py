@@ -87,6 +87,7 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
             optimizer.zero_grad()
             res = net(samples)
             res = res.reshape(-1)           # [[1], [2], [3]] -> [1, 2, 3]
+            labels = labels.type_as(res)    # BCEWithLogitsLoss does not support Long
             loss = criterion(res, labels)
             loss.backward()
             optimizer.step()
@@ -101,8 +102,8 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
         # evaluate every eval_freq
         if (epoch_i % eval_freq == 0):
             net.eval()
-            val_correct = 0
             with torch.no_grad():
+                val_correct = 0
                 # Evaluate using the validation set
                 for j, val_batch in enumerate(validloader):
                     val_samples, val_metas, val_labels = val_batch['image'], val_batch['meta'], val_batch['target']
@@ -110,6 +111,7 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
                         val_samples, val_labels = val_samples.to(device), val_labels.to(device)
                     val_res = net(val_samples)
                     val_res = val_res.reshape(-1)
+                    val_labels = val_labels.type_as(val_res)
                     val_preds = torch.round(torch.sigmoid(val_res))
                     val_correct += (val_preds == val_labels).sum().item()
                 val_total = len(dataset.validset)
