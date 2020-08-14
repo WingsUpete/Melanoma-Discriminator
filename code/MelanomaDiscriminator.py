@@ -120,7 +120,7 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
                     val_res = torch.sigmoid(val_res)
                     val_pred_list[j * validloader.batch_size : j * validloader.batch_size + len(val_samples)] = val_res
                 val_acc = accuracy_score(val_labels, torch.round(val_pred_list))    # accuracy on threshold value = 0.5
-                val_roc_auc = roc_auc_score(val_labels, val_res)
+                val_roc_auc = roc_auc_score(val_labels, val_pred_list)
                 stdLog(sys.stdout, '!!! Validation : acc = %.2f%%, roc_auc = %.2f%%\n' % (val_acc * 100, val_roc_auc * 100), DEBUG, fd)
     
 if __name__ == '__main__':
