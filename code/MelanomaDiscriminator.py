@@ -76,7 +76,7 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
     
     for epoch_i in range(max_epoch):
         # train one round
-        net.train()
+        #net.train()
         train_correct = 0
         train_loss = 0
         for i, batch in enumerate(trainloader):
@@ -101,7 +101,7 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
     
         # evaluate every eval_freq
         if (epoch_i % eval_freq == 0):
-            net.eval()
+            #net.eval()
             with torch.no_grad():
                 val_correct = 0
                 # Evaluate using the validation set
