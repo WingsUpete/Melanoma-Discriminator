@@ -45,8 +45,8 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
     stdLog(sys.stdout, "Loading Melanoma Dataset...\n", DEBUG, fd)
     dataset = MelanomaDataSet(folder, train_transform=Config.train_transform, eval_transform=Config.eval_transform)
     trainloader = DataLoader(dataset.trainset, batch_size=minibatch_size, shuffle=True, num_workers=num_workers)
-    validloader = DataLoader(dataset.validset, batch_size=minibatch_size, shuffle=False, num_workers=num_workers)
-    testloader = DataLoader(dataset.testset, batch_size=minibatch_size, shuffle=False, num_workers=num_workers)
+    validloader = DataLoader(dataset.validset, batch_size=int(minibatch_size/2), shuffle=False, num_workers=num_workers)
+    testloader = DataLoader(dataset.testset, batch_size=int(minibatch_size/2), shuffle=False, num_workers=num_workers)
 
     # Initialize the model
     stdLog(sys.stdout, "Initializing the Training Model...\n", DEBUG, fd)
