@@ -151,8 +151,8 @@ if __name__ == '__main__':
     """
     # Command Line Arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument('-c', '--cores', type=int, default=4, \
-                        help='number of workers (cores used), default=4')
+    parser.add_argument('-c', '--cores', type=int, default=Config.WORKERS_DEFAULT, \
+                        help='number of workers (cores used), default={}'.format(Config.WORKERS_DEFAULT))
     FLAGS, unparsed = parser.parse_known_args()
     print('Running with {} workers.'.format(FLAGS.cores))
 

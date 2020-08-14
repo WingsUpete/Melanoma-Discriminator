@@ -8,6 +8,7 @@
 import os
 import sys
 import argparse
+from datetime import datetime
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -15,126 +16,83 @@ import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.utils.data import DataLoader
 
 from MelanomaDataSet import MelanomaDataSet
+from MelanomaModel import Net
 
 import Config
 
-
-def accuracy(predictions, targets):
+def stdLog(stdwhich, str, DEBUG=True, fd=None):
     """
-    Computes the prediction accuracy, i.e., the average of correct predictions
-    of the network.
-    Args:
-        predictions: 2D float array of size [number_of_data_samples, n_classes]
-        labels: 2D int array of size [number_of_data_samples, n_classes] with one-hot encoding of ground-truth labels
-    Returns:
-        accuracy: scalar float, the accuracy of predictions.
+    Output to std & log file
     """
-    preds = torch.argmax(predictions, dim=1)
-    accuracy = (preds == targets).float().mean()
-    return accuracy
+    if fd:
+        fd.write('{}: {}'.format(datetime.now(), str))
+    if DEBUG:
+        stdwhich.write(str)
 
-def train(learning_rate=LEARNING_RATE_DEFAULT, minibatch_size= BATCH_SIZE_DEFAULT, 
-          max_epoch=MAX_EPOCHS_DEFAULT,  eval_freq=EVAL_FREQ_DEFAULT, optimizer=OPTIMIZER_DEFAULT, \
-          use_gpu=True, folder=DATA_DIR_DEFAULT, DEBUG=True):
+def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATCH_SIZE_DEFAULT, 
+          max_epoch=Config.MAX_EPOCHS_DEFAULT,  eval_freq=Config.EVAL_FREQ_DEFAULT, optimizer=Config.OPTIMIZER_DEFAULT, \
+          num_workers=Config.WORKERS_DEFAULT, use_gpu=True, folder=Config.DATA_DIR_DEFAULT, DEBUG=True, fd=None):
     """
     Performs training and evaluation of the CNN model.
     """
 
     # Load Melanoma Datast
-    print("Loading Melanoma Dataset...")
-    dataset = MelanomaDataSet(folder)
+    stdLog(sys.stdout, "Loading Melanoma Dataset...\n", DEBUG, fd)
+    dataset = MelanomaDataSet(folder, transform=Config.image_transform)
+    trainloader = DataLoader(dataset.trainset, batch_size=minibatch_size, shuffle=True, num_workers=num_workers)
+    validloader = DataLoader(dataset.validset, batch_size=int(minibatch_size/2), shuffle=True, num_workers=num_workers)
+    testloader = DataLoader(dataset.testset, batch_size=int(minibatch_size/2), shuffle=True, num_workers=num_workers)
 
     # Initialize the model
-    print("Initializing the Training Model...")
-    net = CNN(n_inputs, n_classes)
-    loss_func = nn.CrossEntropyLoss()
+    stdLog(sys.stdout, "Initializing the Training Model...\n", DEBUG, fd)
+    net = Net()
+    criterion = nn.BCEWithLogitsLoss()
 
     # Select Optimizer
-    optimizer = torch.optim.Adam(net.parameters(), learning_rate, weight_decay=WEIGHT_DECAY_DEFAULT)    # Adam + L2 Norm
+    if optimizer == 'ADAM':
+        optimizer = torch.optim.Adam(net.parameters(), learning_rate, weight_decay=Config.WEIGHT_DECAY_DEFAULT)    # Adam + L2 Norm
+    else:
+        optimizer = torch.optim.Adam(net.parameters(), learning_rate, weight_decay=Config.WEIGHT_DECAY_DEFAULT)    # Default: Adam + L2 Norm
 
     # CUDA if possible
     device = torch.device("cuda:0" if (use_gpu and torch.cuda.is_available()) else "cpu")
-    print("device: {}".format(device))
+    stdLog(sys.stdout, "device: {}\n".format(device), DEBUG, fd)
 
     if device:
         net.to(device)
-        print("Training Model sent to CUDA")
+        stdLog(sys.stdout, "Training Model sent to CUDA\n", DEBUG, fd)
 
     # Start Training
-    print("Start Training!")
+    stdLog(sys.stdout, "Start Training!\n", DEBUG, fd)
 
-    print("learning_rate = {}, max_epoch = {}".format(learning_rate, max_epoch))
-    print("eval_freq = {}, minibatch_size = {}, optimizer = {}".format(eval_freq, minibatch_size, optimizer))
+    stdLog(sys.stdout, "learning_rate = {}, max_epoch = {}\n".format(learning_rate, max_epoch), DEBUG, fd)
+    stdLog(sys.stdout, "eval_freq = {}, minibatch_size = {}, optimizer = {}\n".format(eval_freq, minibatch_size, optimizer), DEBUG, fd)
 
-    print("------------------------")
+    stdLog(sys.stdout, "------------------------\n", DEBUG, fd)
     
     for epoch_i in range(max_epoch):
         # SGD_once
-        #time0 = time.time()
-        for inputs, labels in dataset.trainloader:
+        for i, batch in enumerate(trainloader):
+            samples, metas, labels = batch['image'], batch['meta'], batch['target']
             if device:
-                inputs, labels = inputs.to(device), labels.to(device)
+                samples, labels = samples.to(device), labels.to(device)
             optimizer.zero_grad()
-            preds = net(inputs)
-            loss = loss_func(preds, labels)
+            res = net(samples)
+            loss = criterion(res, labels)
             loss.backward()
+            print(res, '|', labels, '|', loss)
             optimizer.step()
-        #time1 = time.time()
-        #print("SGD once => {}".format(time1 - time0))
     
         # evaluate every eval_freq
         if (epoch_i % eval_freq == 0):
-            #time2 = time.time()
             with torch.no_grad():
-                training_set_accuracy = 0
-                test_set_accuracy = 0
-                sum = 0
-                loss = 0
-                for xtrain, ytrain in dataset.trainloader:
-                    if device:
-                        xtrain, ytrain = xtrain.to(device), ytrain.to(device)
-                    out_res = net(xtrain)
-                    sum += accuracy(out_res, ytrain)
-                    loss += loss_func(out_res, ytrain)
-                training_set_accuracy = sum / len(dataset.trainloader)
-                training_set_loss = loss / len(dataset.trainloader)
-                training_set_loss = training_set_loss.item()
-                sum = 0
-                loss = 0
-                for xtest, ytest in dataset.testloader:
-                    if device:
-                        xtest, ytest = xtest.to(device), ytest.to(device)
-                    out_res = net(xtest)
-                    sum += accuracy(out_res, ytest)
-                    loss += loss_func(out_res, ytest)
-                test_set_accuracy = sum / len(dataset.testloader)
-                test_set_loss = loss / len(dataset.testloader)
-                test_set_loss = test_set_loss.item()
-            x_epoch.append(epoch_i)
-            y_accuracy_train.append(training_set_accuracy)
-            y_accuracy_test.append(test_set_accuracy)
-            y_loss_train.append(training_set_loss)
-            y_loss_test.append(test_set_loss)
-            if DEBUG:
-                print("epoch = %d,\ttraining_set_accuracy = %.2f%%, training_set_loss = %.2f, test_set_accuracy = %.2f%%, test_set_loss = %.2f" % (epoch_i, training_set_accuracy*100, training_set_loss, test_set_accuracy*100, test_set_loss))
-            #time3 = time.time()
-            #print("Evaluate => {}".format(time3 - time2))
-
-            # plot the result
-            plt.plot(x_epoch, y_accuracy_train, c="red", label="Training Accuracy", alpha=0.8)
-            plt.plot(x_epoch, y_accuracy_test, c="blue", label="Test Accuracy", alpha=0.8)
-            plt.plot(x_epoch, y_loss_train, c="orange", label="Train Loss", alpha=0.8)
-            plt.plot(x_epoch, y_loss_test, c="green", label="Test Loss", alpha=0.8)
-            plt.title("Epoch - Accuracy/Loss")
-            plt.xlabel("Epoch")
-            plt.ylabel("Accuracy/Loss")
-            plt.legend(loc="lower right")
-            plt.show()
-
-    print("epoch = %d,\ttraining_set_accuracy = %.2f%%, training_set_loss = %.2f, test_set_accuracy = %.2f%%, test_set_loss = %.2f" % (epoch_i, training_set_accuracy*100, training_set_loss, test_set_accuracy*100, test_set_loss))
-
+                #print("epoch = %d,\ttraining_set_accuracy = %.2f%%, training_set_loss = %.2f, test_set_accuracy = %.2f%%, test_set_loss = %.2f" % \
+                #      (epoch_i, training_set_accuracy*100, training_set_loss, test_set_accuracy*100, test_set_loss))
+                pass
+    
 if __name__ == '__main__':
     # Command Line Arguments
     parser = argparse.ArgumentParser()
@@ -150,8 +108,23 @@ if __name__ == '__main__':
                         help='Optimizer to be used, default = {}'.format(Config.OPTIMIZER_DEFAULT))
     parser.add_argument('-dr', '--data_dir', type = str, default = Config.DATA_DIR_DEFAULT, \
                         help='Root directory of the input data, default = {}'.format(Config.DATA_DIR_DEFAULT))
+    parser.add_argument('-log', '--log', type = str, default = Config.LOG_DEFAULT, \
+                        help='Specify where to create a log file. If log files are not wanted, value will be None'.format(Config.LOG_DEFAULT))
+    parser.add_argument('-c', '--cores', type=int, default=Config.WORKERS_DEFAULT, \
+                        help='number of workers (cores used), default={}'.format(Config.WORKERS_DEFAULT))
+    parser.add_argument('-gpu', '--gpu', type=bool, default=Config.USE_GPU_DEFAULT, \
+                        help='Specify whether to use GPU, default={}'.format(Config.USE_GPU_DEFAULT))
 
     FLAGS, unparsed = parser.parse_known_args()
 
+    # Starts a log file in the specified directory
+    if FLAGS.log:
+        if not os.path.isdir(FLAGS.log):
+            os.mkdir(FLAGS.log)
+        fd = open(os.path.join(FLAGS.log, '{}.log'.format(datetime.now().strftime('%Y%m%d_%H_%M_%S'))), 'w')
+    else:
+        fd = None
+
     train(learning_rate = FLAGS.learning_rate, minibatch_size = FLAGS.minibatch_size, max_epoch = FLAGS.max_steps, \
-          eval_freq = FLAGS.eval_freq, optimizer = FLAGS.optimizer,  use_gpu = True, folder = FLAGS.data_dir, DEBUG = True)
+          eval_freq = FLAGS.eval_freq, optimizer = FLAGS.optimizer, num_workers=FLAGS.cores, use_gpu = FLAGS.gpu, \
+          folder = FLAGS.data_dir, DEBUG = True, fd = fd)
