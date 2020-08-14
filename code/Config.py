@@ -8,24 +8,21 @@ from torchvision import transforms
 
 # Settings
 train_transform = transforms.Compose([ \
-    transforms.RandomResizedCrop(size=240, scale=(0.9, 1.0)), \
-    transforms.RandomHorizontalFlip(), \
-    transforms.RandomVerticalFlip(), \
+    transforms.RandomResizedCrop(size=240, scale=(0.85, 1.0)), \
     transforms.ToTensor(), \
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]) # standard for EfficientNet \
 ])
-# TODO: test with additional:
 
 eval_transform = transforms.Compose([ \
     transforms.RandomResizedCrop(size=240, scale=(0.996, 1.0)), \
     transforms.ToTensor(), \
-    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]) # standard for EfficientNet \
+    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]) \
 ])
 
 # Default values
 LEARNING_RATE_DEFAULT = 1e-3
 BATCH_SIZE_DEFAULT = 32
-MAX_EPOCHS_DEFAULT = 666
+MAX_EPOCHS_DEFAULT = 150
 EVAL_FREQ_DEFAULT = 5
 OPTIMIZER_DEFAULT = 'RMSprop'
 WEIGHT_DECAY_DEFAULT = 0.01
