@@ -16,7 +16,7 @@ train_transform = transforms.Compose([ \
 #    transforms.RandomVerticalFlip(), \
 
 eval_transform = transforms.Compose([ \
-    transforms.RandomResizedCrop(size=224, scale=(0.9, 1.0)), \
+    transforms.RandomResizedCrop(size=240, scale=(0.9, 1.0)), \
     transforms.ToTensor(), \
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]) # standard for EfficientNet \
 ])
