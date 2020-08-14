@@ -43,8 +43,8 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
     stdLog(sys.stdout, "Loading Melanoma Dataset...\n", DEBUG, fd)
     dataset = MelanomaDataSet(folder, transform=Config.image_transform)
     trainloader = DataLoader(dataset.trainset, batch_size=minibatch_size, shuffle=True, num_workers=num_workers)
-    validloader = DataLoader(dataset.validset, batch_size=int(minibatch_size/2), shuffle=True, num_workers=num_workers)
-    testloader = DataLoader(dataset.testset, batch_size=int(minibatch_size/2), shuffle=True, num_workers=num_workers)
+    validloader = DataLoader(dataset.validset, batch_size=int(minibatch_size/2), shuffle=False, num_workers=num_workers)
+    testloader = DataLoader(dataset.testset, batch_size=int(minibatch_size/2), shuffle=False, num_workers=num_workers)
 
     # Initialize the model
     stdLog(sys.stdout, "Initializing the Training Model...\n", DEBUG, fd)
@@ -74,28 +74,37 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
     stdLog(sys.stdout, "------------------------------------------------------------------\n", DEBUG, fd)
     
     for epoch_i in range(max_epoch):
-        # SGD_once
+        # train one round
+        net.train()
+        train_correct = 0
+        train_loss = 0
         for i, batch in enumerate(trainloader):
             samples, metas, labels = batch['image'], batch['meta'], batch['target']
             if device:
                 samples, labels = samples.to(device), labels.to(device)
+
             optimizer.zero_grad()
-            print(samples)
             res = net(samples)
-            res = res.reshape(-1)
-            labels = labels.type_as(res)
-            print(res, '|', labels)
+            res = res.reshape(-1)           # [[1], [2], [3]] -> [1, 2, 3]
+            labels = labels.type_as(res)    # BCEWithLogitsLoss does not support Long
             loss = criterion(res, labels)
             loss.backward()
-            print(res, '|', labels, '|', loss)
             optimizer.step()
+
+            preds = torch.round(torch.sigmoid(res)) # set threshold to be 0.5 so that values below 0.5 will be considered 0
+            train_correct += (preds == labels).sum().item
+            train_loss += loss.item()
+        train_total = len(dataset.trainset)
+        train_acc = train_correct / train_total
+        stdLog(sys.stdout, 'Training Round {}: acc = %.2f%%, loss = %.2f\n' % (epoch_i, train_acc, loss.item()), DEBUG, fd)
     
         # evaluate every eval_freq
-        if (epoch_i % eval_freq == 0):
-            with torch.no_grad():
-                #print("epoch = %d,\ttraining_set_accuracy = %.2f%%, training_set_loss = %.2f, test_set_accuracy = %.2f%%, test_set_loss = %.2f" % \
-                #      (epoch_i, training_set_accuracy*100, training_set_loss, test_set_accuracy*100, test_set_loss))
-                pass
+        #if (epoch_i % eval_freq == 0):
+        #    net.eval()
+        #    with torch.no_grad():
+        #        #print("epoch = %d,\ttraining_set_accuracy = %.2f%%, training_set_loss = %.2f, test_set_accuracy = %.2f%%, test_set_loss = %.2f" % \
+        #        #      (epoch_i, training_set_accuracy*100, training_set_loss, test_set_accuracy*100, test_set_loss))
+        #        pass
     
 if __name__ == '__main__':
     # Command Line Arguments

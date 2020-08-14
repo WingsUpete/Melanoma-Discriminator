@@ -11,11 +11,9 @@ image_transform = transforms.Compose([ \
     transforms.RandomResizedCrop(size=256, scale=(0.8, 1.0)), \
     transforms.RandomHorizontalFlip(), \
     transforms.RandomVerticalFlip(), \
-    transforms.ToTensor()
+    transforms.ToTensor(), \
+    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]) # standard for EfficientNet \
 ])
-
-#, \
-#    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]) # standard for EfficientNet \
 
 # Default values
 LEARNING_RATE_DEFAULT = 1e-3
