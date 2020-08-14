@@ -81,6 +81,7 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
         train_loss = 0
         for i, batch in enumerate(trainloader):
             samples, metas, labels = batch['image'], batch['meta'], batch['target']
+            print(batch)
             if device:
                 samples, labels = samples.to(device), labels.to(device)
 
