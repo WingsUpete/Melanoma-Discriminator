@@ -5,10 +5,52 @@
 #############################################################
 
 from torchvision import transforms
+import cv2
+import random
 
 # Settings
+class DrawHair:
+    """
+    Draw a random number of pseudo hairs
+    https://www.kaggle.com/nroman/melanoma-pytorch-starter-efficientnet/
+
+    Args:
+        hairs (int): maximum number of hairs to draw
+        width (tuple): possible width of the hair in pixels
+    """
+
+    def __init__(self, hairs=4, width=(1, 2)):
+        self.hairs = hairs
+        self.width = width
+
+    def __call__(self, img):
+        """
+        Args:
+            img (PIL Image): Image to draw hairs on
+
+        Returns:
+            PIL Image: Image with drawn hairs
+        """
+        if not self.hairs:
+            return img
+        width, height, _ = img.shape
+
+        for _ in range(random.randint(0, self.hairs)):
+            # The origin point of the line will always be at the top half of the image
+            origin = (random.randint(0, width), random.randint(0, height // 2))
+            # The end of the line
+            end = (random.ranint(0, width), random.randint(0, height))
+            color = (0, 0, 0)   # color of the hair: Black
+            cv2.line(img, origin, end, color, random.randint(self.width[0], self.width[1]))
+
+        return img
+
 def get_train_transform(img_resize=240):
     return transforms.Compose([ \
+        DrawHair(), \
+        transforms.RandomHorizontalFlip(), \
+        transforms.RandomVerticalFlip(), \
+        transforms.RandomRotation(360), \
         transforms.RandomResizedCrop(size=img_resize, scale=(0.9, 1.0)), \
         transforms.ColorJitter(brightness=[0.8, 1.2], contrast=[0.8, 1.2], saturation=[0.8, 1.2]), \
         transforms.ToTensor(), \
@@ -18,7 +60,6 @@ def get_train_transform(img_resize=240):
 def get_eval_transform(img_resize=240):
     return transforms.Compose([ \
         transforms.RandomResizedCrop(size=img_resize, scale=(1.0, 1.0), ratio=(1.0, 1.0)), \
-        transforms.ColorJitter(brightness=[0.8, 1.2], contrast=[0.8, 1.2], saturation=[0.8, 1.2]), \
         transforms.ToTensor(), \
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]) \
         ])
