@@ -53,7 +53,6 @@ class DrawHair:
 
 # https://www.kaggle.com/sayakdasgupta/siim-isic-melanoma-efficientnet-on-pytorch-tpus
 # https://www.kaggle.com/c/siim-isic-melanoma-classification/discussion/171745
-# standard for EfficientNet
 def get_train_transform(img_resize=240):
     return transforms.Compose([ \
         DrawHair(), \
@@ -74,7 +73,7 @@ LEARNING_RATE_DEFAULT = 1e-3
 BATCH_SIZE_DEFAULT = 32
 MAX_EPOCHS_DEFAULT = 50
 EVAL_FREQ_DEFAULT = 5
-OPTIMIZER_DEFAULT = 'Adam'
+OPTIMIZER_DEFAULT = 'RMSprop'
 WEIGHT_DECAY_DEFAULT = 0.01
 DATA_DIR_DEFAULT = 'DataSet'
 LOG_DEFAULT = 'log'
