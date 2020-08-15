@@ -48,6 +48,9 @@ class DrawHair:
 
         return img
 
+    def __repr__(self):
+        return f'{self.__class__.__name__}(hairs={self.hairs}, width={self.width})'
+
 def get_train_transform(img_resize=240):
     return transforms.Compose([ \
         DrawHair(), \
