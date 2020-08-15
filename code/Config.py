@@ -54,9 +54,6 @@ class DrawHair:
 def get_train_transform(img_resize=240):
     return transforms.Compose([ \
         DrawHair(), \
-        transforms.RandomHorizontalFlip(), \
-        transforms.RandomVerticalFlip(), \
-        transforms.RandomRotation(360), \
         transforms.RandomResizedCrop(size=img_resize, scale=(0.9, 1.0)), \
         transforms.ColorJitter(brightness=[0.8, 1.2], contrast=[0.8, 1.2], saturation=[0.8, 1.2]), \
         transforms.ToTensor(), \
