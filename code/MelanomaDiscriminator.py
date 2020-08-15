@@ -80,6 +80,11 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
 
     stdLog(sys.stdout, "------------------------------------------------------------\n", DEBUG, fd)
     
+    if not os.path.isdir(Config.MODEL_DEFAULT):
+        os.mkdir(Config.MODEL_DEFAULT)
+    
+    best_auc = 0.0
+
     for epoch_i in range(max_epoch):
         # train one round
         net.train()
@@ -122,15 +127,14 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
                 val_label_list = dataset.validset.label_list.type_as(val_pred_list).reshape(-1, 1)
                 val_acc = accuracy_score(val_label_list.cpu(), torch.round(val_pred_list.cpu()))    # accuracy on threshold value = 0.5
                 val_roc_auc = roc_auc_score(val_label_list.cpu(), val_pred_list.cpu())               # AUC score
-
                 stdLog(sys.stdout, '!!! Validation : acc = %.2f%%, roc_auc = %.2f%% !!!\n' % (val_acc * 100, val_roc_auc * 100), DEBUG, fd)
-    
-    if not os.path.isdir(Config.MODEL_DEFAULT):
-        os.mkdir(Config.MODEL_DEFAULT)
 
-    model_name = os.path.join(Config.MODEL_DEFAULT, '{}.pth'.format(time_tag))
-    torch.save(net, model_name)
-    stdLog(sys.stdout, 'Model: {} has been saved.\n'.format(model_name), DEBUG, fd)
+                if train_acc >= 0.9 and val_roc_auc > best_auc:
+                    best_auc = val_roc_auc
+                    model_name = os.path.join(Config.MODEL_DEFAULT, '{}.pth'.format(time_tag))
+                    torch.save(net, model_name)
+                    stdLog(sys.stdout, 'Model: {} has been saved.\n'.format(model_name), DEBUG, fd)
+    
     #net = torch.load(model_name)
 
 if __name__ == '__main__':
