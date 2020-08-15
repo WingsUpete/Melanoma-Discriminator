@@ -51,13 +51,16 @@ class DrawHair:
     def __repr__(self):
         return f'{self.__class__.__name__}(hairs={self.hairs}, width={self.width})'
 
+# https://www.kaggle.com/sayakdasgupta/siim-isic-melanoma-efficientnet-on-pytorch-tpus
+# https://www.kaggle.com/c/siim-isic-melanoma-classification/discussion/171745
+# standard for EfficientNet
 def get_train_transform(img_resize=240):
     return transforms.Compose([ \
-        DrawHair(), # https://www.kaggle.com/sayakdasgupta/siim-isic-melanoma-efficientnet-on-pytorch-tpus \
+        DrawHair(), \
         transforms.RandomResizedCrop(size=img_resize, scale=(0.9, 1.0)), \
-        transforms.ColorJitter(brightness=[0.8, 1.2], contrast=[0.8, 1.2], saturation=[0.8, 1.2]), # https://www.kaggle.com/c/siim-isic-melanoma-classification/discussion/171745 \
+        transforms.ColorJitter(brightness=[0.8, 1.2], contrast=[0.8, 1.2], saturation=[0.8, 1.2]), \
         transforms.ToTensor(), \
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]) # standard for EfficientNet \
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]) \
         ])
 
 def get_eval_transform(img_resize=240):
@@ -72,7 +75,7 @@ LEARNING_RATE_DEFAULT = 1e-3
 BATCH_SIZE_DEFAULT = 32
 MAX_EPOCHS_DEFAULT = 100
 EVAL_FREQ_DEFAULT = 5
-OPTIMIZER_DEFAULT = 'RMSprop'
+OPTIMIZER_DEFAULT = 'Adam'
 WEIGHT_DECAY_DEFAULT = 0.01
 DATA_DIR_DEFAULT = 'DataSet'
 LOG_DEFAULT = 'log'
