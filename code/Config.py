@@ -4,9 +4,10 @@
 ### Data Source: https://challenge2020.isic-archive.com/  ###
 #############################################################
 
-from torchvision import transforms
-import cv2
 import random
+
+from torchvision import transforms
+from PIL import Image, ImageDraw
 
 # Settings
 class DrawHair:
@@ -33,15 +34,17 @@ class DrawHair:
         """
         if not self.hairs:
             return img
-        width, height, _ = img.shape
+
+        width, height = img.size
+        draw = ImageDraw.Draw(img)
 
         for _ in range(random.randint(0, self.hairs)):
             # The origin point of the line will always be at the top half of the image
             origin = (random.randint(0, width), random.randint(0, height // 2))
             # The end of the line
-            end = (random.ranint(0, width), random.randint(0, height))
+            end = (random.randint(0, width), random.randint(0, height))
             color = (0, 0, 0)   # color of the hair: Black
-            cv2.line(img, origin, end, color, random.randint(self.width[0], self.width[1]))
+            draw.line((origin, end), fill=(0, 0, 0), width=random.randint(self.width[0], self.width[1]))
 
         return img
 
