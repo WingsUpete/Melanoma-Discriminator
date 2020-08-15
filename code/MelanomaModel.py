@@ -28,7 +28,6 @@ class Net(nn.Module):
                                                efnet_version in [i + 1 for i in range(7)]) else Config.EFNET_VER_DEFAULT
         self.efnet = EfficientNet.from_pretrained('efficientnet-b{}'.format(self.efnet_version))
         in_features = getattr(self.efnet, '_fc').in_features
-        self.drop = nn.Dropout(0.3)
         self.classifier = nn.Linear(in_features, 1)
     
     def forward(self, x):
@@ -43,8 +42,7 @@ class Net(nn.Module):
         batch_size = x.shape[0]
         features = self.efnet.extract_features(x)
         features = F.adaptive_avg_pool2d(features, 1).reshape(batch_size, -1)
-        dropout = self.drop(features)
-        out = self.classifier(dropout)
+        out = self.classifier(features)
         return out
 
 if __name__ == '__main__':
