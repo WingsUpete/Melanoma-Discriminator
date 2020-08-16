@@ -112,7 +112,7 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
         stdLog(sys.stdout, 'Training Round %d: acc = %.2f%%, loss = %.2f\n' % (epoch_i, train_acc * 100, loss.item()), DEBUG, fd)
     
         # evaluate every eval_freq
-        if (epoch_i % eval_freq == 0):
+        if ((epoch_i + 1) % eval_freq == 0):
             net.eval()
             with torch.no_grad():
                 val_pred_list = torch.zeros((len(dataset.validset), 1)).to(device)
