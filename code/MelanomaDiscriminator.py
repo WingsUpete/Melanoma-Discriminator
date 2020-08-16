@@ -44,7 +44,7 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
 
     # Load Melanoma Datast
     stdLog(sys.stdout, "Loading Melanoma Dataset...\n", DEBUG, fd)
-    dataset = MelanomaDataSet(folder, train_transform=Config.get_train_transform(rs, dh), eval_transform=Config.get_eval_transform(rs))
+    dataset = MelanomaDataSet(folder, train_transform=Config.get_train_transform(rs, bool(dh)), eval_transform=Config.get_eval_transform(rs))
     trainloader = DataLoader(dataset.trainset, batch_size=minibatch_size, shuffle=True, num_workers=num_workers)
     validloader = DataLoader(dataset.validset, batch_size=minibatch_size, shuffle=False, num_workers=num_workers)
     testloader = DataLoader(dataset.testset, batch_size=minibatch_size, shuffle=False, num_workers=num_workers)
@@ -63,7 +63,7 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
         optimizer = torch.optim.Adam(net.parameters(), learning_rate, weight_decay=Config.WEIGHT_DECAY_DEFAULT)    # Default: Adam + L2 Norm
 
     # CUDA if possible
-    device = torch.device("cuda:0" if (use_gpu and torch.cuda.is_available()) else "cpu")
+    device = torch.device("cuda:0" if (bool(use_gpu) and torch.cuda.is_available()) else "cpu")
     stdLog(sys.stdout, "device: {}\n".format(device), DEBUG, fd)
 
     if device:
@@ -156,13 +156,13 @@ if __name__ == '__main__':
                         help='Specify where to create a log file. If log files are not wanted, value will be None'.format(Config.LOG_DEFAULT))
     parser.add_argument('-c', '--cores', type=int, default=Config.WORKERS_DEFAULT, \
                         help='number of workers (cores used), default = {}'.format(Config.WORKERS_DEFAULT))
-    parser.add_argument('-gpu', '--gpu', type=bool, default=Config.USE_GPU_DEFAULT, \
+    parser.add_argument('-gpu', '--gpu', type=int, default=Config.USE_GPU_DEFAULT, \
                         help='Specify whether to use GPU, default = {}'.format(Config.USE_GPU_DEFAULT))
     parser.add_argument('-ev', '--efnet_version', type=int, default=Config.EFNET_VER_DEFAULT, \
                         help='The version of EfficientNet to be used, default = {}'.format(Config.EFNET_VER_DEFAULT))
     parser.add_argument('-rs', '--resize', type=int, default=Config.RESIZE_DEFAULT, \
                         help='The resized size of image, default = {}'.format(Config.RESIZE_DEFAULT))
-    parser.add_argument('-dh', '--draw_hair', type=bool, default=Config.DRAW_HAIR_DEFAULT, \
+    parser.add_argument('-dh', '--draw_hair', type=int, default=Config.DRAW_HAIR_DEFAULT, \
                         help='Specify whether to draw pseudo-hairs in images, default = {}'.format(Config.DRAW_HAIR_DEFAULT))
 
     FLAGS, unparsed = parser.parse_known_args()
