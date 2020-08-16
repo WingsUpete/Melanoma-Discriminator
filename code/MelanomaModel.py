@@ -5,6 +5,7 @@
 #############################################################
 # This file stores the CNN model used to train on the Melanoma Dataset
 # PyTorch's EfficientNet is used, more: https://github.com/lukemelas/EfficientNet-PyTorch#about-efficientnet
+# Pooling and Dropout layers are suggested in https://www.kaggle.com/shaitender/melanoma-efficientnet-pytorch
 
 import torch
 import torch.nn as nn

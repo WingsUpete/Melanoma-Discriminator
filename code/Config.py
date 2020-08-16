@@ -53,9 +53,13 @@ class DrawHair:
 
 # https://www.kaggle.com/sayakdasgupta/siim-isic-melanoma-efficientnet-on-pytorch-tpus
 # https://www.kaggle.com/c/siim-isic-melanoma-classification/discussion/171745
-def get_train_transform(img_resize=240):
+def get_train_transform(img_resize=240, hair=True):
     return transforms.Compose([ \
         DrawHair(), \
+        transforms.RandomResizedCrop(size=img_resize, scale=(0.9, 1.0)), \
+        transforms.ToTensor(), \
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]) \
+        ]) if hair else transforms.Compose([ \
         transforms.RandomResizedCrop(size=img_resize, scale=(0.9, 1.0)), \
         transforms.ToTensor(), \
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]) \
@@ -83,3 +87,4 @@ USE_GPU_DEFAULT = True
 EFNET_VER_DEFAULT = 1
 MAX_NORM_DEFAULT = 10.0
 RESIZE_DEFAULT = 240
+DRAW_HAIR_DEFAULT = True
