@@ -67,7 +67,7 @@ def get_train_transform(img_resize=240, hair=True):
 
 def get_eval_transform(img_resize=240):
     return transforms.Compose([ \
-        transforms.Resize(img_resize, img_resize), \
+        transforms.Resize((img_resize, img_resize)), \
         transforms.ToTensor(), \
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]) \
         ])
