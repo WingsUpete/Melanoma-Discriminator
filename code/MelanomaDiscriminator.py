@@ -156,7 +156,7 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
                     stdLog(sys.stdout, 'Model: {} has been saved.\n'.format(model_name), DEBUG, fd)
 
 def eval(model_name, minibatch_size=Config.BATCH_SIZE_DEFAULT, num_workers=Config.WORKERS_DEFAULT, use_gpu=True, DEBUG=True, fd=None, \
-         rs=Config.RESIZE_DEFAULT, dh=Config.DRAW_HAIR_DEFAULT, folder=Config.DATA_DIR_DEFAULT):
+         rs=Config.RESIZE_DEFAULT, dh=Config.DRAW_HAIR_DEFAULT, folder=Config.DATA_DIR_DEFAULT, use_meta = (Config.USE_META_DEFAULT == 1)):
     """
     Evaluate using saved best model
     1. Re-evaluate the validation set
@@ -189,7 +189,12 @@ def eval(model_name, minibatch_size=Config.BATCH_SIZE_DEFAULT, num_workers=Confi
         samples, metas, labels = batch['image'], batch['meta'], batch['target']
         if device:
             samples, labels = samples.to(device), labels.to(device)
-        res = net(samples)
+            if use_meta:
+                meta_ensemble = metas['ensemble'].to(device)
+        if use_meta:
+            res = net(samples, meta_ensemble)
+        else:
+            res = net(samples)
         pred = torch.sigmoid(res.reshape(-1, 1))
         pred_list[i * validloader.batch_size : i * validloader.batch_size + len(samples)] = pred
 
@@ -243,7 +248,12 @@ def eval(model_name, minibatch_size=Config.BATCH_SIZE_DEFAULT, num_workers=Confi
         samples, metas, labels = batch['image'], batch['meta'], batch['target']
         if device:
             samples, labels = samples.to(device), labels.to(device)
-        res = net(samples)
+            if use_meta:
+                meta_ensemble = metas['ensemble'].to(device)
+        if use_meta:
+            res = net(samples, meta_ensemble)
+        else:
+            res = net(samples)
         pred = torch.sigmoid(res.reshape(-1, 1))
         pred_list[i * testloader.batch_size : i * testloader.batch_size + len(samples)] = pred
 
@@ -323,7 +333,7 @@ if __name__ == '__main__':
                 fd.close()
             exit(-1)
         eval(eval_file, minibatch_size = FLAGS.minibatch_size, num_workers = FLAGS.cores, use_gpu = FLAGS.gpu, DEBUG = True, \
-             fd = fd, rs = FLAGS.resize, dh = FLAGS.draw_hair, folder = FLAGS.data_dir)
+             fd = fd, rs = FLAGS.resize, dh = FLAGS.draw_hair, folder = FLAGS.data_dir, use_meta = (FLAGS.use_meta == 1))
     else:
         sys.stderr.write("Please specify the running mode (train/eval) - 'python MelanomaDiscriminator -m train'\n")
         if fd:
