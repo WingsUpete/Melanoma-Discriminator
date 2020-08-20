@@ -90,7 +90,7 @@ class ResNeXt(nn.Module):
         self.head = nn.Sequential(
             AdaptiveConcatPool2d(),
             Flatten(),
-            nn.Linear(c_feature * 2, c_feature)
+            nn.Linear(self.c_feature * 2, self.c_feature)
         )
         
         if self.use_meta:
