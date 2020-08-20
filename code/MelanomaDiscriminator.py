@@ -64,6 +64,8 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
         optimizer = torch.optim.Adam(net.parameters(), learning_rate, weight_decay=Config.WEIGHT_DECAY_DEFAULT)    # Adam + L2 Norm
     elif optimizer == 'RMSprop':
         optimizer = torch.optim.RMSprop(net.parameters(), learning_rate, weight_decay=Config.WEIGHT_DECAY_DEFAULT)
+    elif optimizer == 'ADAMW':
+        optimizer = torch.optim.AdamW(net.parameters(), learning_rate, weight_decay=Config.WEIGHT_DECAY_DEFAULT)
     else:
         optimizer = torch.optim.Adam(net.parameters(), learning_rate, weight_decay=Config.WEIGHT_DECAY_DEFAULT)    # Default: Adam + L2 Norm
 
@@ -112,7 +114,8 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
             train_loss += loss.item()
         train_total = len(dataset.trainset)
         train_acc = train_correct / train_total
-        stdLog(sys.stdout, 'Training Round %d: acc = %.2f%%, loss = %.2f\n' % (epoch_i, train_acc * 100, loss.item()), DEBUG, fd)
+        train_loss /= len(trainloader)
+        stdLog(sys.stdout, 'Training Round %d: acc = %.2f%%, loss = %.2f\n' % (epoch_i, train_acc * 100, train_loss), DEBUG, fd)
     
         # evaluate every eval_freq
         if ((epoch_i + 1) % eval_freq == 0):
