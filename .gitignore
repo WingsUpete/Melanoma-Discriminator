@@ -132,3 +132,6 @@ dmypy.json
 # Helper folders
 log/
 model/
+
+# VS Code
+.vscode/
