@@ -53,8 +53,10 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
     stdLog(sys.stdout, "Initializing the Training Model...\n", DEBUG, fd)
     if model == 'EfficientNet':
         net = Net(efnet_version=ef_ver)
+        stdLog(sys.stdout, "Using EfficientNet {}, images resized to size = {}\n".format(ef_ver, rs), DEBUG, fd)
     elif model == 'ResNeXt':
         net = ResNeXt()
+        stdLog(sys.stdout, "Using ResNeXt\n".format(ef_ver, rs), DEBUG, fd)
     criterion = nn.BCEWithLogitsLoss()
 
     # Select Optimizer
@@ -74,12 +76,10 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
         stdLog(sys.stdout, "Training Model sent to CUDA\n", DEBUG, fd)
 
     # Start Training
-    stdLog(sys.stdout, "Start Training!\n", DEBUG, fd)
-    
-    stdLog(sys.stdout, "Using EfficientNet {}, images resized to size = {}\n".format(ef_ver, rs), DEBUG, fd)
     stdLog(sys.stdout, "learning_rate = {}, max_epoch = {}, num_workers = {}\n".format(learning_rate, max_epoch, num_workers), DEBUG, fd)
     stdLog(sys.stdout, "eval_freq = {}, minibatch_size = {}, optimizer = {}\n".format(eval_freq, minibatch_size, optimizer), DEBUG, fd)
     stdLog(sys.stdout, "train_transform = {}, eval_transform = {}\n".format(dataset.train_transform, dataset.eval_transform), DEBUG, fd)
+    stdLog(sys.stdout, "Start Training!\n", DEBUG, fd)
 
     stdLog(sys.stdout, "------------------------------------------------------------\n", DEBUG, fd)
     
@@ -103,12 +103,12 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
 
             optimizer.zero_grad()
             res = net(samples)              # [[1], [2], [3]]
-            loss = criterion(res, labels.type_as(res).reshape(-1, 1))  # BCEWithLogitsLoss does not support Long
+            loss = criterion(res.reshape(-1, 1), labels.type_as(res).reshape(-1, 1))  # BCEWithLogitsLoss does not support Long
             loss.backward()
             optimizer.step()
 
             preds = torch.round(torch.sigmoid(res)) # set threshold to be 0.5 so that values below 0.5 will be considered 0
-            train_correct += (preds == labels.type_as(res).reshape(-1, 1)).sum().item()
+            train_correct += (preds.reshape(-1, 1) == labels.type_as(res).reshape(-1, 1)).sum().item()
             train_loss += loss.item()
         train_total = len(dataset.trainset)
         train_acc = train_correct / train_total
@@ -125,7 +125,7 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
                     if device:
                         val_samples, val_labels = val_samples.to(device), val_labels.to(device)
                     val_res = net(val_samples)
-                    val_pred = torch.sigmoid(val_res)
+                    val_pred = torch.sigmoid(val_res.reshape(-1, 1))
                     val_pred_list[j * validloader.batch_size : j * validloader.batch_size + len(val_samples)] = val_pred
                 val_label_list = dataset.validset.label_list.type_as(val_pred_list).reshape(-1, 1)
                 val_acc = accuracy_score(val_label_list.cpu(), torch.round(val_pred_list.cpu()))    # accuracy on threshold value = 0.5
