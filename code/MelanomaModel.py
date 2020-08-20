@@ -15,9 +15,9 @@ import torchvision.models as models
 
 from efficientnet_pytorch import EfficientNet
 
-class Net(nn.Module):
+class EfNet(nn.Module):
 
-    def __init__(self, efnet_version):
+    def __init__(self, efnet_version, meta=False, meta_len=24):
         """
         Initializes a model network.
         
@@ -26,15 +26,36 @@ class Net(nn.Module):
         Vars:
             efnet (EfficientNet): the EfficientNet network to be used
         """
-        super(Net, self).__init__()
+        super(EfNet, self).__init__()
+        self.use_meta = meta
         self.efnet_version = efnet_version if (isinstance(efnet_version, int) and \
                                                efnet_version in [i + 1 for i in range(7)]) else Config.EFNET_VER_DEFAULT
         self.efnet = EfficientNet.from_pretrained('efficientnet-b{}'.format(self.efnet_version))
         in_features = getattr(self.efnet, '_fc').in_features
-        self.drop = nn.Dropout(0.3)
-        self.classifier = nn.Linear(in_features, 1)
+
+        if self.use_meta:
+            self.meta_features = 256
+            self.final_fc_features = 128
+
+            self.meta_path = nn.Sequential(
+                nn.Linear(meta_len, self.meta_features * 2), \
+                nn.ReLU(), \
+                nn.Linear(self.meta_features * 2, self.meta_features), \
+                nn.ReLU(), \
+                nn.Linear(self.meta_features, self.meta_features), \
+                nn.ReLU() \
+            )
+            
+            self.final_fc = nn.Sequential(
+                nn.Linear(in_features + self.meta_features, self.final_fc_features),
+                nn.ReLU(),
+                nn.Linear(self.final_fc_features, 1)
+            )
+        else:
+            self.drop = nn.Dropout(0.3)
+            self.classifier = nn.Linear(in_features, 1)
     
-    def forward(self, x):
+    def forward(self, x, meta_ensemble=None):
         """
         Performs forward pass of the input.
         
@@ -45,9 +66,13 @@ class Net(nn.Module):
         """
         batch_size = x.shape[0]
         features = self.efnet.extract_features(x)
-        features = F.adaptive_avg_pool2d(features, 1).reshape(batch_size, -1)
-        dropout = self.drop(features)
-        out = self.classifier(dropout)
+        if self.use_meta:
+            meta_out = self.meta_path(meta_ensemble)
+            out = self.final_fc(torch.cat((features, meta_out), dim=1))
+        else:
+            features = F.adaptive_avg_pool2d(features, 1).reshape(batch_size, -1)
+            dropout = self.drop(features)
+            out = self.classifier(dropout)
         return out
 
 # Author of the code below: Peng Weiyuan
@@ -115,7 +140,6 @@ class ResNeXt(nn.Module):
     def forward(self, x, meta_ensemble=None):
         h = self.base(x)
         logits = self.head(h).squeeze(1)
-        #logits = self.head(h).reshape(-1)
         if self.use_meta:
             meta_out = self.meta_path(meta_ensemble)
             out = self.final_fc(torch.cat((logits, meta_out), dim=1))

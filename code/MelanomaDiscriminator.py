@@ -21,7 +21,7 @@ from torch.utils.data import DataLoader
 from sklearn.metrics import accuracy_score, roc_auc_score, roc_curve, precision_recall_curve
 
 from MelanomaDataSet import MelanomaDataSet
-from MelanomaModel import Net, ResNeXt
+from MelanomaModel import EfNet, ResNeXt
 
 import Config
 
@@ -55,7 +55,7 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
     # Initialize the model
     stdLog(sys.stdout, "Initializing the Training Model...\n", DEBUG, fd)
     if model == 'EfficientNet':
-        net = Net(efnet_version=ef_ver)
+        net = EfNet(efnet_version=ef_ver, meta=use_meta)
         stdLog(sys.stdout, "Using EfficientNet {}, images resized to size = {}\n".format(ef_ver, rs), DEBUG, fd)
     elif model == 'ResNeXt':
         net = ResNeXt(meta=use_meta)
