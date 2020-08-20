@@ -146,7 +146,7 @@ def eval(model_name, minibatch_size=Config.BATCH_SIZE_DEFAULT, num_workers=Confi
     """
     Evaluate using saved best model
     1. Re-evaluate the validation set, find the roc_auc score
-    2. Find the optimal threshold for the model/network
+    2. Plot the ROC curve, find the optimal threshold for the model/network
     3. Use the optimal threshold to predict the test set
     """
     
@@ -163,6 +163,7 @@ def eval(model_name, minibatch_size=Config.BATCH_SIZE_DEFAULT, num_workers=Confi
         net.to(device)
         stdLog(sys.stdout, "Training Model sent to CUDA\n", DEBUG, fd)
     
+    # 1.
     net.eval()
     pred_list = torch.zeros((len(dataset.validset), 1)).to(device)
 
@@ -177,6 +178,19 @@ def eval(model_name, minibatch_size=Config.BATCH_SIZE_DEFAULT, num_workers=Confi
     label_list = dataset.validset.label_list.type_as(pred_list).reshape(-1, 1)
     roc_auc = roc_auc_score(label_list.cpu(), pred_list.cpu())
     stdLog(sys.stdout, 'Validation Set: roc_auc = %.2f%%\n' % (roc_auc * 100), DEBUG, fd)
+
+    # 2.
+    fpr, tpr, thresholds = roc_curve(label_list.reshape(1, -1).cpu().numpy(), pred_list.reshape(1, -1).cpu().numpy(), pos_label=1)
+    plt.figure()
+    plt.plot(fpr, tpr, color='darkorange', lw=2, label='ROC Curve (area = %.2f)' % (roc_auc))   # plot the curve
+    plt.plot([0, 1], [0, 1], color='navy', lw=1, linestyle='--')                                # plot a diagonal line for reference
+    plt.xlim([0.0, 1.0])
+    plt.xlim([0.0, 1.05])
+    plt.xlabel('False Positive Rate')
+    plt.xlabel('True Positive Rate')
+    plt.title('Receiver Operating Characteristic (ROC) of Melanoma Model')
+    plt.legend(loc="lower right")
+    plt.show()
 
 if __name__ == '__main__':
     # Command Line Arguments
