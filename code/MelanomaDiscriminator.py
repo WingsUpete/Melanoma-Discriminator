@@ -187,9 +187,9 @@ def eval(model_name, minibatch_size=Config.BATCH_SIZE_DEFAULT, num_workers=Confi
     plt.plot(fpr, tpr, color='darkorange', lw=2, label='ROC Curve (area = %.2f)' % (roc_auc))   # plot the curve
     plt.plot([0, 1], [0, 1], color='navy', lw=1, linestyle='--')                                # plot a diagonal line for reference
     plt.xlim([0.0, 1.0])
-    plt.xlim([0.0, 1.05])
+    plt.ylim([0.0, 1.05])
     plt.xlabel('False Positive Rate')
-    plt.xlabel('True Positive Rate')
+    plt.ylabel('True Positive Rate')
     plt.title('Receiver Operating Characteristic (ROC) of Melanoma Model')
     plt.legend(loc="lower right")
     
