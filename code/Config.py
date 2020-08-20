@@ -5,6 +5,7 @@
 #############################################################
 
 import random
+import os
 
 from torchvision import transforms
 from PIL import Image, ImageDraw
@@ -89,3 +90,4 @@ RESIZE_DEFAULT = 240
 DRAW_HAIR_DEFAULT = 1
 NETWORK_DEFAULT = 'ResNeXt'
 MODE_DEFAULT = 'train'
+META_MAPPING_DEFAULT = os.path.join(DATA_DIR_DEFAULT, 'mappings.json')

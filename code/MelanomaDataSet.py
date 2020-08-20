@@ -10,6 +10,7 @@ import os
 import sys
 import time
 import argparse
+import json
 
 import numpy as np
 import pandas as pd
@@ -43,6 +44,8 @@ class MDS_Entity(Dataset):
             test (Boolean): whether this is a test set
         """
         self.data_frame = pd.read_csv(csv_file)
+        with open(Config.META_MAPPING_DEFAULT) as f:
+            self.mappings = json.load(f)
         self.root_dir = root_dir
         self.transform = transform
         self.test = test
@@ -80,7 +83,8 @@ class MDS_Entity(Dataset):
             "image_name": str(self.data_frame.iloc[idx, 0]), \
             "sex": str(self.data_frame.iloc[idx, 1]), \
             "age_approx": MDS_Entity.tryConvertInt(self.data_frame.iloc[idx, 2]), \
-            "anatom_site_general_challenge": str(self.data_frame.iloc[idx, 3]) \
+            "anatom_site_general_challenge": str(self.data_frame.iloc[idx, 3]), \
+            "ensemble": self.get_meta_ensemble(self.data_frame.iloc[idx])
             } if self.test else { \
             "image_name": str(self.data_frame.iloc[idx, 0]), \
             "sex": str(self.data_frame.iloc[idx, 1]), \
@@ -88,12 +92,27 @@ class MDS_Entity(Dataset):
             "anatom_site_general_challenge": str(self.data_frame.iloc[idx, 3]), \
             "diagnosis": str(self.data_frame.iloc[idx, 4]), \
             "benign_malignant": str(self.data_frame.iloc[idx, 5]), \
-            "target": MDS_Entity.tryConvertFloat(self.data_frame.iloc[idx, 6]) \
+            "target": MDS_Entity.tryConvertFloat(self.data_frame.iloc[idx, 6]), \
+            "ensemble": self.get_meta_ensemble(self.data_frame.iloc[idx])
             }
 
         # return data & label
         sample = {'image': image, 'meta': meta, 'target': label}
         return sample
+
+    def get_meta_ensemble(self, meta_frame):
+        """
+        Transform metadata into values that can be learned
+        Author: idea desgined by Wei Yanbin, code refactored by Peter S
+        """
+        meta_len, meta_map = self.mappings['meta_len'], self.mappings['map']
+        meta_ensemble = [0] * meta_len
+        for i in range(len(meta_map)):
+            mapped_index = meta_map[i][str(meta_frame[i + 1]) if (meta_frame[i + 1] and str(meta_frame[i + 1]) != 'nan') else ""]  # fetch corresponding value
+            if mapped_index == -1:
+                continue
+            meta_ensemble[mapped_index] = 1
+        return meta_ensemble
 
     def tryConvertInt(str):
         """
