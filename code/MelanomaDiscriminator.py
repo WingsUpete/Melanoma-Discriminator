@@ -136,7 +136,12 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
                     val_samples, val_metas, val_labels = val_batch['image'], val_batch['meta'], val_batch['target']
                     if device:
                         val_samples, val_labels = val_samples.to(device), val_labels.to(device)
-                    val_res = net(val_samples)
+                        if use_meta:
+                            val_meta_ensemble = val_metas['ensemble'].to(device)
+                    if use_meta:
+                        val_res = net(val_samples, val_meta_ensemble)
+                    else:
+                        val_res = net(val_samples)
                     val_pred = torch.sigmoid(val_res.reshape(-1, 1))
                     val_pred_list[j * validloader.batch_size : j * validloader.batch_size + len(val_samples)] = val_pred
                 val_label_list = dataset.validset.label_list.type_as(val_pred_list).reshape(-1, 1)
