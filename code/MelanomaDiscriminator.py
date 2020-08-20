@@ -18,7 +18,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 
-from sklearn.metrics import accuracy_score, roc_auc_score, roc_curve
+from sklearn.metrics import accuracy_score, roc_auc_score, roc_curve, precision_recall_curve
 
 from MelanomaDataSet import MelanomaDataSet
 from MelanomaModel import Net, ResNeXt
@@ -185,7 +185,9 @@ def eval(model_name, minibatch_size=Config.BATCH_SIZE_DEFAULT, num_workers=Confi
     stdLog(sys.stdout, 'Validation Set: roc_auc = %.2f%%\n' % (roc_auc * 100), DEBUG, fd)
 
     # 3.
-    fpr, tpr, thresholds = roc_curve(label_list.reshape(-1).cpu().numpy(), pred_list.reshape(-1).cpu().numpy(), pos_label=1)
+    true_label = label_list.reshape(-1).cpu().numpy()
+    pred_prob = pred_list.reshape(-1).cpu().numpy()
+    fpr, tpr, thresholds = roc_curve(true_label, pred_prob, pos_label=1)
     plt.figure()
     plt.plot(fpr, tpr, color='darkorange', lw=2, label='ROC Curve (area = %.4f)' % (roc_auc))   # plot the curve
     plt.plot([0, 1], [0, 1], color='navy', lw=1, linestyle='--')                                # plot a diagonal line for reference
@@ -209,6 +211,14 @@ def eval(model_name, minibatch_size=Config.BATCH_SIZE_DEFAULT, num_workers=Confi
     #plt.show()
 
     # 4.
+    tp = tpr * dataset.validset.num_pos
+    tn = (1 - fpr) * dataset.validset.num_neg
+    acc = (tp + tn) / len(dataset.validset)
+    best_threshold = thresholds[np.argmax(acc)]
+    stdLog(sys.stdout, 'Optimal Threshold = %.4f\n' % (best_threshold))
+
+    # 5.
+
 
 
 if __name__ == '__main__':

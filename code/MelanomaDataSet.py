@@ -47,9 +47,16 @@ class MDS_Entity(Dataset):
         self.transform = transform
         self.test = test
         self.label_list = []
+        self.num_pos = 0
+        self.num_neg = 0
         if not self.test:
             for i in range(len(self.data_frame)):
-                self.label_list.append(MDS_Entity.tryConvertFloat(self.data_frame.iloc[i, 6]))
+                cur_label = MDS_Entity.tryConvertFloat(self.data_frame.iloc[i, 6])
+                self.label_list.append(cur_label)
+                if cur_label == 1:
+                    self.num_pos += 1
+                elif cur_label == 0:
+                    self.num_neg += 1
             self.label_list = torch.Tensor(self.label_list)
         else:
             self.label_list = None
