@@ -221,7 +221,7 @@ def eval(model_name, minibatch_size=Config.BATCH_SIZE_DEFAULT, num_workers=Confi
     stdLog(sys.stdout, 'Optimal Threshold = %.4f\n' % (best_threshold))
 
     # 5.
-    pred_list = torch.zeros((len(dataset.validset), 1)).to(device)
+    pred_list = torch.zeros((len(dataset.testset), 1)).to(device)
     for i, batch in enumerate(testloader):
         samples, metas, labels = batch['image'], batch['meta'], batch['target']
         if device:
