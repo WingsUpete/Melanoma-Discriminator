@@ -16,6 +16,7 @@ Created by <a href="mailto:petershen815@126.com">Peter S</a> on Aug 11th, 2020
 -   [`PIL [Python Image Library]`](https://python-pillow.org/)
 -   [`pandas`](https://pandas.pydata.org/)
 -   [`efficientnet_pytorch`](https://github.com/lukemelas/EfficientNet-PyTorch#about-efficientnet)
+-   [`pytorch-lightning`](https://github.com/PyTorchLightning/pytorch-lightning)
 
 <br>
 
@@ -27,12 +28,7 @@ The data has been simplified and split into training/validation sets.
 
 See `MelanomaDataSet.py` for more details
 
-The training/validation/test sets are packed using PyTorch’s `Dataset` and can be accessed through `DataLoader`. For each set, the image data and metadata are packed together as a sample. The images will be transformed with such procedure by default:
-
-1.  Resize and crop randomly to `224 x 224` with scaling of `[0.9, 1.0]`
-3.  ~~Flip horizontally and vertically, each with a `probability = 0.5`~~
-3.  ~~Transform to tensor~~
-4.  Normalize channel values with `mean=(0.485, 0.456, 0.406)`, `std=(0.229, 0.224, 0.225)`
+The training/validation/test sets are packed using PyTorch’s `Dataset` and can be accessed through `DataLoader`. For each set, the image data and metadata are packed together as a sample.
 
 <br>
 

@@ -21,7 +21,7 @@ from torch.utils.data import DataLoader
 from sklearn.metrics import accuracy_score, roc_auc_score, roc_curve
 
 from MelanomaDataSet import MelanomaDataSet
-from MelanomaModel import Net
+from MelanomaModel import Net, ResNeXt
 
 import Config
 
@@ -37,7 +37,7 @@ def stdLog(stdwhich, str, DEBUG=True, fd=None):
 def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATCH_SIZE_DEFAULT, ef_ver=Config.EFNET_VER_DEFAULT, \
           max_epoch=Config.MAX_EPOCHS_DEFAULT,  eval_freq=Config.EVAL_FREQ_DEFAULT, optimizer=Config.OPTIMIZER_DEFAULT, \
           num_workers=Config.WORKERS_DEFAULT, use_gpu=True, folder=Config.DATA_DIR_DEFAULT, DEBUG=True, fd=None, time_tag='WHEN', \
-          rs=Config.RESIZE_DEFAULT, dh=Config.DRAW_HAIR_DEFAULT):
+          rs=Config.RESIZE_DEFAULT, dh=Config.DRAW_HAIR_DEFAULT, model = Config.NETWORK_DEFAULT):
     """
     Performs training and evaluation of the CNN model.
     """
@@ -51,7 +51,10 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
 
     # Initialize the model
     stdLog(sys.stdout, "Initializing the Training Model...\n", DEBUG, fd)
-    net = Net(efnet_version=ef_ver)
+    if model == 'EfficientNet':
+        net = Net(efnet_version=ef_ver)
+    elif model == 'ResNeXt':
+        net = ResNeXt()
     criterion = nn.BCEWithLogitsLoss()
 
     # Select Optimizer
@@ -164,6 +167,8 @@ if __name__ == '__main__':
                         help='The resized size of image, default = {}'.format(Config.RESIZE_DEFAULT))
     parser.add_argument('-dh', '--draw_hair', type=int, default=Config.DRAW_HAIR_DEFAULT, \
                         help='Specify whether to draw pseudo-hairs in images, default = {}'.format(Config.DRAW_HAIR_DEFAULT))
+    parser.add_argument('-net', '--network', type=str, default=Config.NETWORK_DEFAULT, \
+                        help='Specify which model/network to use, default = {}'.format(Config.NETWORK_DEFAULT))
 
     FLAGS, unparsed = parser.parse_known_args()
 
@@ -179,4 +184,5 @@ if __name__ == '__main__':
 
     train(learning_rate = FLAGS.learning_rate, minibatch_size = FLAGS.minibatch_size, max_epoch = FLAGS.max_steps, \
           ef_ver=FLAGS.efnet_version, eval_freq = FLAGS.eval_freq, optimizer = FLAGS.optimizer, num_workers=FLAGS.cores, \
-          use_gpu = FLAGS.gpu, folder = FLAGS.data_dir, DEBUG = True, fd = fd, time_tag=time_tag, rs = FLAGS.resize, dh = FLAGS.draw_hair)
+          use_gpu = FLAGS.gpu, folder = FLAGS.data_dir, DEBUG = True, fd = fd, time_tag=time_tag, rs = FLAGS.resize, dh = FLAGS.draw_hair, \
+          model = FLAGS.network)

@@ -10,6 +10,8 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.nn.modules import module
+import torchvision.models as models
 
 from efficientnet_pytorch import EfficientNet
 
@@ -47,6 +49,54 @@ class Net(nn.Module):
         dropout = self.drop(features)
         out = self.classifier(dropout)
         return out
+
+# Author of the code below: Peng Weiyuan
+class AdaptiveConcatPool2d(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.avg = nn.AdaptiveAvgPool2d(output_size=(1, 1))
+        self.max = nn.AdaptiveMaxPool2d(output_size=(1, 1))
+
+    def forward(self, x):
+        avg_x = self.avg(x)
+        max_x = self.max(x)
+        return torch.cat([avg_x, max_x], dim=1)
+
+
+class Flatten(nn.Module):
+    def forward(self, x):
+        return x.view(x.shape[0], -1)
+
+
+class ResNeXt(nn.Module):
+
+    def __init__(self, c_out=1):
+        super().__init__()
+        remove_range = 2
+        m = models.resnet18(pretrained=True)
+        # m = models.resnext50_32x4d(pretrained=True)
+        # m = torch.hub.load('pytorch/vision:v0.6.0',
+        #                    'resnext50_32x4d', pretrained=True)
+
+        c_feature = list(m.children())[-1].in_features
+        self.base = nn.Sequential(*list(m.children())[:-remove_range])
+        self.head = nn.Sequential(
+            AdaptiveConcatPool2d(),
+            Flatten(),
+            nn.Linear(c_feature * 2, c_out)
+        )
+        # self.base = nn.Sequential(*list(m.children())[:-remove_range])
+        # self.head = nn.Sequential(
+        #     AdaptiveConcatPool2d(),
+        #     Flatten(),
+        #     nn.Linear(c_feature * 2, c_out)
+        # )
+        
+
+    def forward(self, x):
+        h = self.base(x)
+        logits = self.head(h).squeeze(1)
+        return logits
 
 if __name__ == '__main__':
     net = Net(1)
