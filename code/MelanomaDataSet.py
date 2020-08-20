@@ -112,7 +112,7 @@ class MDS_Entity(Dataset):
             if mapped_index == -1:
                 continue
             meta_ensemble[mapped_index] = 1
-        return meta_ensemble
+        return torch.Tensor(meta_ensemble)
 
     def tryConvertInt(str):
         """

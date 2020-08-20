@@ -84,6 +84,7 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
     stdLog(sys.stdout, "learning_rate = {}, max_epoch = {}, num_workers = {}\n".format(learning_rate, max_epoch, num_workers), DEBUG, fd)
     stdLog(sys.stdout, "eval_freq = {}, minibatch_size = {}, optimizer = {}\n".format(eval_freq, minibatch_size, optimizer), DEBUG, fd)
     stdLog(sys.stdout, "train_transform = {}, eval_transform = {}\n".format(dataset.train_transform, dataset.eval_transform), DEBUG, fd)
+    stdLog(sys.stdout, "Using meta: {}\n".format(use_meta), DEBUG, fd)
     stdLog(sys.stdout, "Start Training!\n", DEBUG, fd)
 
     stdLog(sys.stdout, "------------------------------------------------------------\n", DEBUG, fd)
