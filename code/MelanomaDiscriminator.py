@@ -152,7 +152,8 @@ def eval(model_name, minibatch_size=Config.BATCH_SIZE_DEFAULT, num_workers=Confi
     
     # Load Melanoma Datast
     stdLog(sys.stdout, "Loading Melanoma Dataset...\n", DEBUG, fd)
-    dataset = MelanomaDataSet(folder, train_transform=Config.get_train_transform(rs, bool(dh)), eval_transform=Config.get_eval_transform(rs))
+    dataset = MelanomaDataSet(folder, train_transform=Config.get_train_transform(rs, bool(dh)), eval_transform=Config.get_eval_transform(rs), \
+                              train=False, valid=True, test=True)
     validloader = DataLoader(dataset.validset, batch_size=minibatch_size, shuffle=False, num_workers=num_workers)
     testloader = DataLoader(dataset.testset, batch_size=minibatch_size, shuffle=False, num_workers=num_workers)
 
@@ -194,10 +195,10 @@ def eval(model_name, minibatch_size=Config.BATCH_SIZE_DEFAULT, num_workers=Confi
     
     base = os.path.basename(model_name)
     filename = os.path.splitext(base)[0]
-    path = os.path.join(Config.EVAL_DEFAULT, filename)
-    if not os.path.isdir(path):
-        os.mkdir(path)
-    imgname = os.path.join(path, '{}.png'.format(filename))
+    eval_path = os.path.join(Config.EVAL_DEFAULT, filename)
+    if not os.path.isdir(eval_path):
+        os.mkdir(eval_path)
+    imgname = os.path.join(eval_path, '{}.png'.format(filename))
     plt.savefig(imgname, bbox_inches='tight')
     stdLog(sys.stdout, 'ROC curve saved to {}\n'.format(imgname), DEBUG, fd)
     #plt.show()
