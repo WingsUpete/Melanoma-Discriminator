@@ -40,7 +40,7 @@ def predict(prob, threshold):
 def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATCH_SIZE_DEFAULT, ef_ver=Config.EFNET_VER_DEFAULT, \
           max_epoch=Config.MAX_EPOCHS_DEFAULT, eval_freq=Config.EVAL_FREQ_DEFAULT, optimizer=Config.OPTIMIZER_DEFAULT, \
           num_workers=Config.WORKERS_DEFAULT, use_gpu=True, folder=Config.DATA_DIR_DEFAULT, DEBUG=True, fd=None, time_tag='WHEN', \
-          rs=Config.RESIZE_DEFAULT, dh=Config.DRAW_HAIR_DEFAULT, model = Config.NETWORK_DEFAULT):
+          rs=Config.RESIZE_DEFAULT, dh=Config.DRAW_HAIR_DEFAULT, model = Config.NETWORK_DEFAULT, use_meta=True):
     """
     Performs training and evaluation of the CNN model.
     """
@@ -58,7 +58,7 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
         net = Net(efnet_version=ef_ver)
         stdLog(sys.stdout, "Using EfficientNet {}, images resized to size = {}\n".format(ef_ver, rs), DEBUG, fd)
     elif model == 'ResNeXt':
-        net = ResNeXt()
+        net = ResNeXt(meta=use_meta)
         stdLog(sys.stdout, "Using ResNeXt\n".format(ef_ver, rs), DEBUG, fd)
     criterion = nn.BCEWithLogitsLoss()
 
@@ -102,12 +102,17 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
             samples, metas, labels = batch['image'], batch['meta'], batch['target']
             if device:
                 samples, labels = samples.to(device), labels.to(device)
+                if use_meta:
+                    meta_ensemble = metas['ensemble'].to(device)
 
             # the following line is to deal with exploding gradients
             torch.nn.utils.clip_grad_norm_(net.parameters(), max_norm=Config.MAX_NORM_DEFAULT)
 
             optimizer.zero_grad()
-            res = net(samples)              # [[1], [2], [3]]
+            if use_meta:
+                res = net(samples, meta_ensemble)              # [[1], [2], [3]]
+            else:
+                res = net(samples)
             loss = criterion(res.reshape(-1, 1), labels.type_as(res).reshape(-1, 1))  # BCEWithLogitsLoss does not support Long
             loss.backward()
             optimizer.step()
@@ -282,6 +287,8 @@ if __name__ == '__main__':
                         help='Specify which mode the discriminator runs in (train, eval), default = {}'.format(Config.MODE_DEFAULT))
     parser.add_argument('-e', '--eval', type=str, default=Config.EVAL_DEFAULT, \
                         help='Specify the location of saved network to be loaded for evaluation, default = {}'.format(Config.EVAL_DEFAULT))
+    parser.add_argument('-meta', '--use_meta', type=int, default=Config.USE_META_DEFAULT, \
+                        help='Specify whether to use meta, default = {}'.format(Config.USE_META_DEFAULT))
 
     FLAGS, unparsed = parser.parse_known_args()
 
@@ -301,7 +308,7 @@ if __name__ == '__main__':
         train(learning_rate = FLAGS.learning_rate, minibatch_size = FLAGS.minibatch_size, max_epoch = FLAGS.max_steps, \
               ef_ver=FLAGS.efnet_version, eval_freq = FLAGS.eval_freq, optimizer = FLAGS.optimizer, num_workers=FLAGS.cores, \
               use_gpu = FLAGS.gpu, folder = FLAGS.data_dir, DEBUG = True, fd = fd, time_tag=time_tag, rs = FLAGS.resize, dh = FLAGS.draw_hair, \
-              model = FLAGS.network)
+              model = FLAGS.network, use_meta = (FLAGS.use_meta == 1))
     elif discriminator_mode == 'eval':
         eval_file = FLAGS.eval
         if (not eval_file) or (not os.path.isfile(eval_file)):
