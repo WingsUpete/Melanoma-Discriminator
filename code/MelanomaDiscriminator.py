@@ -231,14 +231,14 @@ def eval(model_name, minibatch_size=Config.BATCH_SIZE_DEFAULT, num_workers=Confi
         pred_list[i * testloader.batch_size : i * testloader.batch_size + len(samples)] = pred
 
     probs = pred_list.detach().reshape(-1)
-    thr = torch.Tensor([best_threshold])
+    thr = torch.Tensor([best_threshold]).to(device)
     test_predictions = (probs >= thr).float()
 
     resname = os.path.join(eval_path, '{}.csv'.format(eval_filename))
     resname_f = open(resname, 'w')
     for i in range(len(dataset.testset)):
         cur_res = '{},{}\n'.format(dataset.testset[i]['meta']['image_name'], int(test_predictions[i]))
-        stdLog(sys.stdout, cur_res, DEBUG, fd)
+        stdLog(None, cur_res, False, fd)
         resname_f.write(cur_res)
     resname_f.close()
 
