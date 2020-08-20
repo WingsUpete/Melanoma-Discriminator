@@ -228,7 +228,7 @@ def eval(model_name, minibatch_size=Config.BATCH_SIZE_DEFAULT, num_workers=Confi
             samples, labels = samples.to(device), labels.to(device)
         res = net(samples)
         pred = torch.sigmoid(res.reshape(-1, 1))
-        pred_list[i * validloader.batch_size : i * validloader.batch_size + len(samples)] = pred
+        pred_list[i * testloader.batch_size : i * testloader.batch_size + len(samples)] = pred
 
     probs = pred_list.detach().reshape(-1)
     thr = torch.Tensor([best_threshold])
@@ -240,6 +240,7 @@ def eval(model_name, minibatch_size=Config.BATCH_SIZE_DEFAULT, num_workers=Confi
         cur_res = '{},{}\n'.format(dataset.testset[i]['meta']['image_name'], int(test_predictions[i]))
         stdLog(sys.stdout, cur_res, DEBUG, fd)
         resname_f.write(cur_res)
+    resname_f.close()
 
 if __name__ == '__main__':
     # Command Line Arguments
@@ -298,9 +299,13 @@ if __name__ == '__main__':
         eval_file = FLAGS.eval
         if (not eval_file) or (not os.path.isfile(eval_file)):
             sys.stderr.write('File for evaluation not found, please check!\n')
+            if fd:
+                fd.close()
             exit(-1)
         eval(eval_file, minibatch_size = FLAGS.minibatch_size, num_workers = FLAGS.cores, use_gpu = FLAGS.gpu, DEBUG = True, \
              fd = fd, rs = FLAGS.resize, dh = FLAGS.draw_hair, folder = FLAGS.data_dir)
     else:
         sys.stderr.write("Please specify the running mode (train/eval) - 'python MelanomaDiscriminator -m train'\n")
+        if fd:
+            fd.close()
         exit(-2)
