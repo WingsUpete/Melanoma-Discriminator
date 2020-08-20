@@ -68,7 +68,7 @@ class EfNet(nn.Module):
         features = self.efnet.extract_features(x)
         if self.use_meta:
             meta_out = self.meta_path(meta_ensemble)
-            out = self.final_fc(torch.cat((features, meta_out), dim=1))
+            out = self.final_fc(torch.cat((features.reshape(-1), meta_out), dim=1))
         else:
             features = F.adaptive_avg_pool2d(features, 1).reshape(batch_size, -1)
             dropout = self.drop(features)
