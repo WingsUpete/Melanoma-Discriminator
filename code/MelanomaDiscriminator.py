@@ -195,7 +195,6 @@ def eval(model_name, minibatch_size=Config.BATCH_SIZE_DEFAULT, num_workers=Confi
     
     eval_base = os.path.basename(model_name)
     eval_filename = os.path.splitext(eval_base)[0]
-    print(Config.EVAL_DEFAULT)
     eval_path = os.path.join(Config.EVAL_DEFAULT, eval_filename)
     if not os.path.isdir(eval_path):
         os.mkdir(eval_path)
