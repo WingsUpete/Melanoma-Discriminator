@@ -175,8 +175,8 @@ def eval(model_name, minibatch_size=Config.BATCH_SIZE_DEFAULT, num_workers=Confi
         pred = torch.sigmoid(res.reshape(-1, 1))
         pred_list[i * validloader.batch_size : i * validloader.batch_size + len(samples)] = pred
 
-    pred_list, label_list = pred_list.detach(), label_list.detach()
     label_list = dataset.validset.label_list.type_as(pred_list).reshape(-1, 1)
+    pred_list, label_list = pred_list.detach(), label_list.detach()
     roc_auc = roc_auc_score(label_list.cpu(), pred_list.cpu())
     stdLog(sys.stdout, 'Validation Set: roc_auc = %.2f%%\n' % (roc_auc * 100), DEBUG, fd)
 
@@ -197,7 +197,9 @@ def eval(model_name, minibatch_size=Config.BATCH_SIZE_DEFAULT, num_workers=Confi
     path = os.path.join(Config.EVAL_DEFAULT, filename)
     if not os.path.isdir(path):
         os.mkdir(path)
-    plt.savefig(os.path.join(path, '{}.png'.format(filename)), bbox_inches='tight')
+    imgname = os.path.join(path, '{}.png'.format(filename))
+    plt.savefig(imgname, bbox_inches='tight')
+    stdLog(sys.stdout, 'ROC curve saved to {}\n'.format(imgname), DEBUG, fd)
     #plt.show()
 
 if __name__ == '__main__':
