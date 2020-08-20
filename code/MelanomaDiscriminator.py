@@ -167,12 +167,13 @@ def eval(model_name, minibatch_size=Config.BATCH_SIZE_DEFAULT, num_workers=Confi
     stdLog(sys.stdout, "device: {}\n".format(device), DEBUG, fd)
     if device:
         net.to(device)
-        stdLog(sys.stdout, "Training Model sent to CUDA\n", DEBUG, fd)
+        stdLog(sys.stdout, "Best Model sent to CUDA\n", DEBUG, fd)
     
     # 1.
     net.eval()
     pred_list = torch.zeros((len(dataset.validset), 1)).to(device)
 
+    stdLog(sys.stdout, "Evaluating on Validation Set\n", DEBUG, fd)
     for i, batch in enumerate(validloader):
         samples, metas, labels = batch['image'], batch['meta'], batch['target']
         if device:
@@ -218,10 +219,15 @@ def eval(model_name, minibatch_size=Config.BATCH_SIZE_DEFAULT, num_workers=Confi
     tn = (1 - fpr) * dataset.validset.num_neg
     acc = (tp + tn) / len(dataset.validset)
     best_threshold = thresholds[np.argmax(acc)]
-    stdLog(sys.stdout, 'Optimal Threshold = %.4f\n' % (best_threshold))
+    probs = pred_list.cpu().reshape(-1)
+    thr = torch.Tensor([best_threshold])
+    valid_predictions = (probs >= thr).float()
+    val_acc = accuracy_score(label_list.cpu().reshape(-1), valid_predictions)
+    stdLog(sys.stdout, 'Optimal Threshold = %.4f, Accuracy under optimal threshold = %.2f%%\n' % (best_threshold, val_acc * 100), DEBUG, fd)
 
     # 5.
     pred_list = torch.zeros((len(dataset.testset), 1)).to(device)
+    stdLog(sys.stdout, "Evaluating on Test Set\n", DEBUG, fd)
     for i, batch in enumerate(testloader):
         samples, metas, labels = batch['image'], batch['meta'], batch['target']
         if device:
@@ -241,6 +247,7 @@ def eval(model_name, minibatch_size=Config.BATCH_SIZE_DEFAULT, num_workers=Confi
         stdLog(None, cur_res, False, fd)
         resname_f.write(cur_res)
     resname_f.close()
+    stdLog(sys.stdout, 'Predictions on test set output to {}\n'.format(resname), DEBUG, fd)
 
 if __name__ == '__main__':
     # Command Line Arguments
