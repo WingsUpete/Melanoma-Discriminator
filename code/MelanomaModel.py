@@ -118,7 +118,7 @@ class ResNeXt(nn.Module):
         #logits = self.head(h).reshape(-1)
         if self.use_meta:
             meta_out = self.meta_path(meta_ensemble)
-            out = self.final_fc(cat((logits, meta_out), dim=1))
+            out = self.final_fc(torch.cat((logits, meta_out), dim=1))
             return out
         else:
             return logits
