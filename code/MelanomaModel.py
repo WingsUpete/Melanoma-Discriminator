@@ -51,6 +51,7 @@ class Net(nn.Module):
         return out
 
 # Author of the code below: Peng Weiyuan
+# parameter settings suggested in https://www.kaggle.com/zzy990106/pytorch-efficientnet-b2-resnext50
 class AdaptiveConcatPool2d(nn.Module):
     def __init__(self):
         super().__init__()

@@ -35,7 +35,7 @@ def stdLog(stdwhich, str, DEBUG=True, fd=None):
         stdwhich.write(str)
 
 def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATCH_SIZE_DEFAULT, ef_ver=Config.EFNET_VER_DEFAULT, \
-          max_epoch=Config.MAX_EPOCHS_DEFAULT,  eval_freq=Config.EVAL_FREQ_DEFAULT, optimizer=Config.OPTIMIZER_DEFAULT, \
+          max_epoch=Config.MAX_EPOCHS_DEFAULT, eval_freq=Config.EVAL_FREQ_DEFAULT, optimizer=Config.OPTIMIZER_DEFAULT, \
           num_workers=Config.WORKERS_DEFAULT, use_gpu=True, folder=Config.DATA_DIR_DEFAULT, DEBUG=True, fd=None, time_tag='WHEN', \
           rs=Config.RESIZE_DEFAULT, dh=Config.DRAW_HAIR_DEFAULT, model = Config.NETWORK_DEFAULT):
     """
@@ -47,7 +47,7 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
     dataset = MelanomaDataSet(folder, train_transform=Config.get_train_transform(rs, bool(dh)), eval_transform=Config.get_eval_transform(rs))
     trainloader = DataLoader(dataset.trainset, batch_size=minibatch_size, shuffle=True, num_workers=num_workers)
     validloader = DataLoader(dataset.validset, batch_size=minibatch_size, shuffle=False, num_workers=num_workers)
-    testloader = DataLoader(dataset.testset, batch_size=minibatch_size, shuffle=False, num_workers=num_workers)
+    #testloader = DataLoader(dataset.testset, batch_size=minibatch_size, shuffle=False, num_workers=num_workers)
 
     # Initialize the model
     stdLog(sys.stdout, "Initializing the Training Model...\n", DEBUG, fd)
@@ -115,7 +115,7 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
         train_total = len(dataset.trainset)
         train_acc = train_correct / train_total
         train_loss /= len(trainloader)
-        stdLog(sys.stdout, 'Training Round %d: acc = %.2f%%, loss = %.2f\n' % (epoch_i, train_acc * 100, train_loss), DEBUG, fd)
+        stdLog(sys.stdout, 'Training Round %d: acc = %.2f%%, loss = %.4f\n' % (epoch_i, train_acc * 100, train_loss), DEBUG, fd)
     
         # evaluate every eval_freq
         if ((epoch_i + 1) % eval_freq == 0):
@@ -140,8 +140,43 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
                     model_name = os.path.join(Config.MODEL_DEFAULT, '{}.pth'.format(time_tag))
                     torch.save(net, model_name)
                     stdLog(sys.stdout, 'Model: {} has been saved.\n'.format(model_name), DEBUG, fd)
+
+def eval(model_name, minibatch_size=Config.BATCH_SIZE_DEFAULT, num_workers=Config.WORKERS_DEFAULT, use_gpu=True, DEBUG=True, fd=None, \
+         rs=Config.RESIZE_DEFAULT, dh=Config.DRAW_HAIR_DEFAULT, folder=Config.DATA_DIR_DEFAULT):
+    """
+    Evaluate using saved best model
+    1. Re-evaluate the validation set, find the roc_auc score
+    2. Find the optimal threshold for the model/network
+    3. Use the optimal threshold to predict the test set
+    """
     
-    #net = torch.load(model_name)
+    # Load Melanoma Datast
+    stdLog(sys.stdout, "Loading Melanoma Dataset...\n", DEBUG, fd)
+    dataset = MelanomaDataSet(folder, train_transform=Config.get_train_transform(rs, bool(dh)), eval_transform=Config.get_eval_transform(rs))
+    validloader = DataLoader(dataset.validset, batch_size=minibatch_size, shuffle=False, num_workers=num_workers)
+    testloader = DataLoader(dataset.testset, batch_size=minibatch_size, shuffle=False, num_workers=num_workers)
+
+    net = torch.load(model_name)
+    device = torch.device("cuda:0" if (bool(use_gpu) and torch.cuda.is_available()) else "cpu")
+    stdLog(sys.stdout, "device: {}\n".format(device), DEBUG, fd)
+    if device:
+        net.to(device)
+        stdLog(sys.stdout, "Training Model sent to CUDA\n", DEBUG, fd)
+    
+    net.eval()
+    pred_list = torch.zeros((len(dataset.validset), 1)).to(device)
+
+    for i, batch in enumerate(validloader):
+        samples, metas, labels = batch['image'], batch['meta'], batch['target']
+        if device:
+            samples, labels = samples.to(device), labels.to(device)
+        res = net(samples)
+        pred = torch.sigmoid(res.reshape(-1, 1))
+        pred_list[i * validloader.batch_size : i * validloader.batch_size + len(samples)] = pred
+
+    label_list = dataset.validset.label_list.type_as(pred_list).reshape(-1, 1)
+    roc_auc = roc_auc_score(label_list.cpu(), pred_list.cpu())
+    stdLog(sys.stdout, 'Validation Set: roc_auc = %.2f%%\n' % (roc_auc * 100), DEBUG, fd)
 
 if __name__ == '__main__':
     # Command Line Arguments
@@ -172,8 +207,13 @@ if __name__ == '__main__':
                         help='Specify whether to draw pseudo-hairs in images, default = {}'.format(Config.DRAW_HAIR_DEFAULT))
     parser.add_argument('-net', '--network', type=str, default=Config.NETWORK_DEFAULT, \
                         help='Specify which model/network to use, default = {}'.format(Config.NETWORK_DEFAULT))
+    parser.add_argument('-m', '--mode', type=str, default=Config.MODE_DEFAULT, \
+                        help='Specify which mode the discriminator runs in (train, eval), default = {}'.format(Config.MODE_DEFAULT))
+    parser.add_argument('-e', '--eval', type=str, default=Config.EVAL_DEFAULT, \
+                        help='Specify the location of saved network to be loaded for evaluation, default = {}'.format(Config.EVAL_DEFAULT))
 
     FLAGS, unparsed = parser.parse_known_args()
+
 
     time_tag = datetime.now().strftime('%Y%m%d_%H_%M_%S')
 
@@ -185,7 +225,19 @@ if __name__ == '__main__':
     else:
         fd = None
 
-    train(learning_rate = FLAGS.learning_rate, minibatch_size = FLAGS.minibatch_size, max_epoch = FLAGS.max_steps, \
-          ef_ver=FLAGS.efnet_version, eval_freq = FLAGS.eval_freq, optimizer = FLAGS.optimizer, num_workers=FLAGS.cores, \
-          use_gpu = FLAGS.gpu, folder = FLAGS.data_dir, DEBUG = True, fd = fd, time_tag=time_tag, rs = FLAGS.resize, dh = FLAGS.draw_hair, \
-          model = FLAGS.network)
+    discriminator_mode = FLAGS.mode
+    if discriminator_mode == 'train':
+        train(learning_rate = FLAGS.learning_rate, minibatch_size = FLAGS.minibatch_size, max_epoch = FLAGS.max_steps, \
+              ef_ver=FLAGS.efnet_version, eval_freq = FLAGS.eval_freq, optimizer = FLAGS.optimizer, num_workers=FLAGS.cores, \
+              use_gpu = FLAGS.gpu, folder = FLAGS.data_dir, DEBUG = True, fd = fd, time_tag=time_tag, rs = FLAGS.resize, dh = FLAGS.draw_hair, \
+              model = FLAGS.network)
+    elif discriminator_mode == 'eval':
+        eval_file = FLAGS.eval
+        if (not eval_file) or (not os.path.isfile(eval_file)):
+            sys.stderr.write('File for evaluation not found, please check!\n')
+            exit(-1)
+        eval(eval_file, minibatch_size = FLAGS.minibatch_size, num_workers = FLAGS.cores, use_gpu = FLAGS.gpu, DEBUG = True, \
+             fd = fd, rs = FLAGS.resize, dh = FLAGS.draw_hair, folder = FLAGS.data_dir)
+    else:
+        sys.stderr.write("Please specify the running mode (train/eval) - 'python MelanomaDiscriminator -m train'\n")
+        exit(-2)
