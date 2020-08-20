@@ -175,12 +175,13 @@ def eval(model_name, minibatch_size=Config.BATCH_SIZE_DEFAULT, num_workers=Confi
         pred = torch.sigmoid(res.reshape(-1, 1))
         pred_list[i * validloader.batch_size : i * validloader.batch_size + len(samples)] = pred
 
+    pred_list, label_list = pred_list.detach(), label_list.detach()
     label_list = dataset.validset.label_list.type_as(pred_list).reshape(-1, 1)
     roc_auc = roc_auc_score(label_list.cpu(), pred_list.cpu())
     stdLog(sys.stdout, 'Validation Set: roc_auc = %.2f%%\n' % (roc_auc * 100), DEBUG, fd)
 
     # 2.
-    fpr, tpr, thresholds = roc_curve(label_list.reshape(1, -1).cpu().detach().numpy(), pred_list.reshape(1, -1).cpu().detach().numpy(), pos_label=1)
+    fpr, tpr, thresholds = roc_curve(label_list.reshape(1, -1).cpu().numpy(), pred_list.reshape(1, -1).cpu().numpy(), pos_label=1)
     plt.figure()
     plt.plot(fpr, tpr, color='darkorange', lw=2, label='ROC Curve (area = %.2f)' % (roc_auc))   # plot the curve
     plt.plot([0, 1], [0, 1], color='navy', lw=1, linestyle='--')                                # plot a diagonal line for reference
