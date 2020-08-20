@@ -145,9 +145,11 @@ def eval(model_name, minibatch_size=Config.BATCH_SIZE_DEFAULT, num_workers=Confi
          rs=Config.RESIZE_DEFAULT, dh=Config.DRAW_HAIR_DEFAULT, folder=Config.DATA_DIR_DEFAULT):
     """
     Evaluate using saved best model
-    1. Re-evaluate the validation set, find the roc_auc score
-    2. Plot the ROC curve, find the optimal threshold for the model/network
-    3. Use the optimal threshold to predict the test set
+    1. Re-evaluate the validation set
+    2. Find the roc_auc score
+    3. Plot the ROC curve
+    4. Find the optimal threshold for the model/network
+    5. Use the optimal threshold to predict the test set
     """
     
     # Load Melanoma Datast
@@ -176,15 +178,16 @@ def eval(model_name, minibatch_size=Config.BATCH_SIZE_DEFAULT, num_workers=Confi
         pred = torch.sigmoid(res.reshape(-1, 1))
         pred_list[i * validloader.batch_size : i * validloader.batch_size + len(samples)] = pred
 
+    # 2.
     label_list = dataset.validset.label_list.type_as(pred_list).reshape(-1, 1)
     pred_list, label_list = pred_list.detach(), label_list.detach()
     roc_auc = roc_auc_score(label_list.cpu(), pred_list.cpu())
     stdLog(sys.stdout, 'Validation Set: roc_auc = %.2f%%\n' % (roc_auc * 100), DEBUG, fd)
 
-    # 2.
+    # 3.
     fpr, tpr, thresholds = roc_curve(label_list.reshape(-1).cpu().numpy(), pred_list.reshape(-1).cpu().numpy(), pos_label=1)
     plt.figure()
-    plt.plot(fpr, tpr, color='darkorange', lw=2, label='ROC Curve (area = %.2f)' % (roc_auc))   # plot the curve
+    plt.plot(fpr, tpr, color='darkorange', lw=2, label='ROC Curve (area = %.4f)' % (roc_auc))   # plot the curve
     plt.plot([0, 1], [0, 1], color='navy', lw=1, linestyle='--')                                # plot a diagonal line for reference
     plt.xlim([0.0, 1.0])
     plt.ylim([0.0, 1.05])
@@ -204,6 +207,9 @@ def eval(model_name, minibatch_size=Config.BATCH_SIZE_DEFAULT, num_workers=Confi
     plt.savefig(imgname, bbox_inches='tight')
     stdLog(sys.stdout, 'ROC curve saved to {}\n'.format(imgname), DEBUG, fd)
     #plt.show()
+
+    # 4.
+
 
 if __name__ == '__main__':
     # Command Line Arguments
