@@ -195,8 +195,7 @@ def eval(model_name, minibatch_size=Config.BATCH_SIZE_DEFAULT, num_workers=Confi
     
     eval_base = os.path.basename(model_name)
     eval_filename = os.path.splitext(eval_base)[0]
-    print(model_name, eval_base, eval_filename)
-    eval_path = os.path.join(Config.EVAL_DEFAULT, eval_filename)
+    eval_path = '{}/{}'.format(Config.EVAL_DEFAULT, eval_filename)
     if not os.path.isdir(eval_path):
         os.mkdir(eval_path)
     imgname = os.path.join(eval_path, '{}.png'.format(eval_filename))
