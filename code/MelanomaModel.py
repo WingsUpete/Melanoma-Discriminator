@@ -5,6 +5,7 @@
 #############################################################
 # This file stores the CNN model used to train on the Melanoma Dataset
 # PyTorch's EfficientNet is used, more: https://github.com/lukemelas/EfficientNet-PyTorch#about-efficientnet
+# Pooling and Dropout layers are suggested in https://www.kaggle.com/shaitender/melanoma-efficientnet-pytorch
 
 import torch
 import torch.nn as nn
@@ -26,7 +27,10 @@ class Net(nn.Module):
         super(Net, self).__init__()
         self.efnet_version = efnet_version if (isinstance(efnet_version, int) and \
                                                efnet_version in [i + 1 for i in range(7)]) else Config.EFNET_VER_DEFAULT
-        self.efnet = EfficientNet.from_pretrained('efficientnet-b{}'.format(self.efnet_version), num_classes=1)
+        self.efnet = EfficientNet.from_pretrained('efficientnet-b{}'.format(self.efnet_version))
+        in_features = getattr(self.efnet, '_fc').in_features
+        self.drop = nn.Dropout(0.3)
+        self.classifier = nn.Linear(in_features, 1)
     
     def forward(self, x):
         """
@@ -37,9 +41,13 @@ class Net(nn.Module):
         Returns:
           out: outputs of the network
         """
-        out = self.efnet(x)
+        batch_size = x.shape[0]
+        features = self.efnet.extract_features(x)
+        features = F.adaptive_avg_pool2d(features, 1).reshape(batch_size, -1)
+        dropout = self.drop(features)
+        out = self.classifier(dropout)
         return out
 
 if __name__ == '__main__':
-    net = Net(2)
+    net = Net(1)
     
