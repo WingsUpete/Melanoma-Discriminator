@@ -34,6 +34,9 @@ def stdLog(stdwhich, str, DEBUG=True, fd=None):
     if DEBUG:
         stdwhich.write(str)
 
+def predict(prob, threshold):
+    return 1 if prob >= threshold else 0
+
 def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATCH_SIZE_DEFAULT, ef_ver=Config.EFNET_VER_DEFAULT, \
           max_epoch=Config.MAX_EPOCHS_DEFAULT, eval_freq=Config.EVAL_FREQ_DEFAULT, optimizer=Config.OPTIMIZER_DEFAULT, \
           num_workers=Config.WORKERS_DEFAULT, use_gpu=True, folder=Config.DATA_DIR_DEFAULT, DEBUG=True, fd=None, time_tag='WHEN', \
@@ -44,10 +47,10 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
 
     # Load Melanoma Datast
     stdLog(sys.stdout, "Loading Melanoma Dataset...\n", DEBUG, fd)
-    dataset = MelanomaDataSet(folder, train_transform=Config.get_train_transform(rs, bool(dh)), eval_transform=Config.get_eval_transform(rs))
+    dataset = MelanomaDataSet(folder, train_transform=Config.get_train_transform(rs, bool(dh)), eval_transform=Config.get_eval_transform(rs), \
+                              train=True, valid=True, test=False)
     trainloader = DataLoader(dataset.trainset, batch_size=minibatch_size, shuffle=True, num_workers=num_workers)
     validloader = DataLoader(dataset.validset, batch_size=minibatch_size, shuffle=False, num_workers=num_workers)
-    #testloader = DataLoader(dataset.testset, batch_size=minibatch_size, shuffle=False, num_workers=num_workers)
 
     # Initialize the model
     stdLog(sys.stdout, "Initializing the Training Model...\n", DEBUG, fd)
@@ -218,8 +221,25 @@ def eval(model_name, minibatch_size=Config.BATCH_SIZE_DEFAULT, num_workers=Confi
     stdLog(sys.stdout, 'Optimal Threshold = %.4f\n' % (best_threshold))
 
     # 5.
+    pred_list = torch.zeros((len(dataset.validset), 1)).to(device)
+    for i, batch in enumerate(testloader):
+        samples, metas, labels = batch['image'], batch['meta'], batch['target']
+        if device:
+            samples, labels = samples.to(device), labels.to(device)
+        res = net(samples)
+        pred = torch.sigmoid(res.reshape(-1, 1))
+        pred_list[i * validloader.batch_size : i * validloader.batch_size + len(samples)] = pred
 
+    probs = pred_list.detach().reshape(-1)
+    thr = torch.Tensor([best_threshold])
+    test_predictions = (probs >= thr).float()
 
+    resname = os.path.join(eval_path, '{}.csv'.format(eval_filename))
+    resname_f = open(resname, 'w')
+    for i in range(len(dataset.testset)):
+        cur_res = '{},{}\n'.format(dataset.testset[i]['meta']['image_name'], int(test_predictions[i]))
+        stdLog(sys.stdout, cur_res, DEBUG, fd)
+        resname_f.write(cur_res)
 
 if __name__ == '__main__':
     # Command Line Arguments
