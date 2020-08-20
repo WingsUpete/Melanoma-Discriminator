@@ -181,7 +181,7 @@ def eval(model_name, minibatch_size=Config.BATCH_SIZE_DEFAULT, num_workers=Confi
     stdLog(sys.stdout, 'Validation Set: roc_auc = %.2f%%\n' % (roc_auc * 100), DEBUG, fd)
 
     # 2.
-    fpr, tpr, thresholds = roc_curve(label_list.reshape(1, -1).cpu().numpy(), pred_list.reshape(1, -1).cpu().numpy(), pos_label=1)
+    fpr, tpr, thresholds = roc_curve(label_list.reshape(-1).cpu().numpy(), pred_list.reshape(-1).cpu().numpy(), pos_label=1)
     plt.figure()
     plt.plot(fpr, tpr, color='darkorange', lw=2, label='ROC Curve (area = %.2f)' % (roc_auc))   # plot the curve
     plt.plot([0, 1], [0, 1], color='navy', lw=1, linestyle='--')                                # plot a diagonal line for reference
