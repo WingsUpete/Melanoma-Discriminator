@@ -32,6 +32,8 @@ class EfNet(nn.Module):
                                                efnet_version in [i + 1 for i in range(7)]) else Config.EFNET_VER_DEFAULT
         self.efnet = EfficientNet.from_pretrained('efficientnet-b{}'.format(self.efnet_version))
         in_features = getattr(self.efnet, '_fc').in_features
+        
+        self.drop = nn.Dropout(0.3)
 
         if self.use_meta:
             self.meta_features = 256
@@ -52,7 +54,6 @@ class EfNet(nn.Module):
                 nn.Linear(self.final_fc_features, 1)
             )
         else:
-            self.drop = nn.Dropout(0.3)
             self.classifier = nn.Linear(in_features, 1)
     
     def forward(self, x, meta_ensemble=None):
@@ -66,12 +67,12 @@ class EfNet(nn.Module):
         """
         batch_size = x.shape[0]
         features = self.efnet.extract_features(x)
+        features = F.adaptive_avg_pool2d(features, 1).reshape(batch_size, -1)
+        dropout = self.drop(features)
         if self.use_meta:
             meta_out = self.meta_path(meta_ensemble)
-            out = self.final_fc(torch.cat((features.reshape(-1), meta_out), dim=1))
+            out = self.final_fc(torch.cat((dropout, meta_out), dim=1))
         else:
-            features = F.adaptive_avg_pool2d(features, 1).reshape(batch_size, -1)
-            dropout = self.drop(features)
             out = self.classifier(dropout)
         return out
 

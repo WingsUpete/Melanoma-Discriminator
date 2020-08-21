@@ -108,7 +108,7 @@ class MDS_Entity(Dataset):
         meta_len, meta_map = self.mappings['meta_len'], self.mappings['map']
         meta_ensemble = [0] * meta_len
         for i in range(len(meta_map)):
-            mapped_index = meta_map[i][str(meta_frame[i + 1]) if (meta_frame[i + 1] and str(meta_frame[i + 1]) != 'nan') else ""]  # fetch corresponding value
+            mapped_index = meta_map[i][str(meta_frame[i + 1]) if str(meta_frame[i + 1]) != 'nan' else ""]  # fetch corresponding value
             if mapped_index == -1:
                 continue
             meta_ensemble[mapped_index] = 1
