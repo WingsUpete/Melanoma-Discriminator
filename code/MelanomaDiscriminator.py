@@ -183,8 +183,8 @@ def eval(model_name, minibatch_size=Config.BATCH_SIZE_DEFAULT, num_workers=Confi
     testloader = DataLoader(dataset.testset, batch_size=minibatch_size, shuffle=False, num_workers=num_workers)
 
     net = torch.load(model_name)
-    if not net.use_meta:    # fix older version issue
-        net.use_meta = False
+    if not hasattr(net, 'use_meta'):    # fix older version issue
+        setattr(net, 'use_meta', False)
     device = torch.device("cuda:0" if (bool(use_gpu) and torch.cuda.is_available()) else "cpu")
     stdLog(sys.stdout, "device: {}\n".format(device), DEBUG, fd)
     if device:
