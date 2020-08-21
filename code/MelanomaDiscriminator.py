@@ -34,9 +34,6 @@ def stdLog(stdwhich, str, DEBUG=True, fd=None):
     if DEBUG:
         stdwhich.write(str)
 
-def predict(prob, threshold):
-    return 1 if prob >= threshold else 0
-
 def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATCH_SIZE_DEFAULT, ef_ver=Config.EFNET_VER_DEFAULT, \
           max_epoch=Config.MAX_EPOCHS_DEFAULT, eval_freq=Config.EVAL_FREQ_DEFAULT, optimizer=Config.OPTIMIZER_DEFAULT, \
           num_workers=Config.WORKERS_DEFAULT, use_gpu=True, folder=Config.DATA_DIR_DEFAULT, DEBUG=True, fd=None, time_tag='WHEN', \
