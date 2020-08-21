@@ -156,7 +156,7 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
                 thr = torch.Tensor([val_best_threshold])
                 valid_predictions = (val_probs >= thr).float()
                 val_acc = accuracy_score(val_label_list.reshape(-1).cpu(), valid_predictions)
-                stdLog(sys.stdout, '!!! Validation : acc = %.2f%% under threshold = %.2f, roc_auc = %.2f%% !!!\n' % (val_acc * 100, val_best_threshold, val_roc_auc * 100), DEBUG, fd)
+                stdLog(sys.stdout, '!!! Validation : acc = %.2f%% under threshold = %.4f, roc_auc = %.2f%% !!!\n' % (val_acc * 100, val_best_threshold, val_roc_auc * 100), DEBUG, fd)
 
                 if train_acc >= 0.9 and val_roc_auc > best_auc:
                     best_auc = val_roc_auc
@@ -192,7 +192,7 @@ def eval(model_name, minibatch_size=Config.BATCH_SIZE_DEFAULT, num_workers=Confi
     # 1.
     net.eval()
     torch.cuda.empty_cache()
-    with torch.no_grad:
+    with torch.no_grad():
         pred_list = torch.zeros((len(dataset.validset), 1)).to(device)
         
         stdLog(sys.stdout, "Evaluating on Validation Set\n", DEBUG, fd)
