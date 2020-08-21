@@ -145,9 +145,18 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
                     val_pred = torch.sigmoid(val_res.reshape(-1, 1))
                     val_pred_list[j * validloader.batch_size : j * validloader.batch_size + len(val_samples)] = val_pred
                 val_label_list = dataset.validset.label_list.type_as(val_pred_list).reshape(-1, 1)
-                val_acc = accuracy_score(val_label_list.cpu(), torch.round(val_pred_list.cpu()))    # accuracy on threshold value = 0.5
+                #val_acc = accuracy_score(val_label_list.cpu(), torch.round(val_pred_list.cpu()))    # accuracy on threshold value = 0.5
                 val_roc_auc = roc_auc_score(val_label_list.cpu(), val_pred_list.cpu())               # AUC score
-                stdLog(sys.stdout, '!!! Validation : acc = %.2f%%, roc_auc = %.2f%% !!!\n' % (val_acc * 100, val_roc_auc * 100), DEBUG, fd)
+                fpr, tpr, thresholds = roc_curve(val_label_list.reshape(-1).cpu(), val_pred_list.reshape(-1).cpu(), pos_label=1)
+                tp = tpr * dataset.validset.num_pos
+                tn = (1 - fpr) * dataset.validset.num_neg
+                val_accs = (tp + tn) / len(dataset.validset)
+                val_best_threshold = thresholds[np.argmax(val_accs)]
+                val_probs = val_pred_list.reshape(-1).cpu()
+                thr = torch.Tensor([val_best_threshold])
+                valid_predictions = (val_probs >= thr).float()
+                val_acc = accuracy_score(val_label_list.reshape(-1).cpu(), valid_predictions)
+                stdLog(sys.stdout, '!!! Validation : acc = %.2f%% under threshold = %.2f, roc_auc = %.2f%% !!!\n' % (val_acc * 100, val_best_threshold, val_roc_auc * 100), DEBUG, fd)
 
                 if train_acc >= 0.9 and val_roc_auc > best_auc:
                     best_auc = val_roc_auc
