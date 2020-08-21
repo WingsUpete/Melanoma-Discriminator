@@ -182,93 +182,97 @@ def eval(model_name, minibatch_size=Config.BATCH_SIZE_DEFAULT, num_workers=Confi
     
     # 1.
     net.eval()
-    pred_list = torch.zeros((len(dataset.validset), 1)).to(device)
-
-    stdLog(sys.stdout, "Evaluating on Validation Set\n", DEBUG, fd)
-    for i, batch in enumerate(validloader):
-        samples, metas, labels = batch['image'], batch['meta'], batch['target']
-        if device:
-            samples, labels = samples.to(device), labels.to(device)
+    torch.cuda.empty_cache()
+    with torch.no_grad:
+        pred_list = torch.zeros((len(dataset.validset), 1)).to(device)
+        
+        stdLog(sys.stdout, "Evaluating on Validation Set\n", DEBUG, fd)
+        for i, batch in enumerate(validloader):
+            samples, metas, labels = batch['image'], batch['meta'], batch['target']
+            if device:
+                samples, labels = samples.to(device), labels.to(device)
+                if use_meta:
+                    meta_ensemble = metas['ensemble'].to(device)
             if use_meta:
-                meta_ensemble = metas['ensemble'].to(device)
-        if use_meta:
-            res = net(samples, meta_ensemble)
-        else:
-            res = net(samples)
-        pred = torch.sigmoid(res.reshape(-1, 1))
-        pred_list[i * validloader.batch_size : i * validloader.batch_size + len(samples)] = pred
-
-    # 2.
-    label_list = dataset.validset.label_list.type_as(pred_list).reshape(-1, 1)
-    pred_list, label_list = pred_list.detach(), label_list.detach()
-    roc_auc = roc_auc_score(label_list.cpu(), pred_list.cpu())
-    stdLog(sys.stdout, 'Validation Set: roc_auc = %.2f%%\n' % (roc_auc * 100), DEBUG, fd)
-
-    # 3.
-    true_label = label_list.reshape(-1).cpu().numpy()
-    pred_prob = pred_list.reshape(-1).cpu().numpy()
-    fpr, tpr, thresholds = roc_curve(true_label, pred_prob, pos_label=1)
-    plt.figure()
-    plt.plot(fpr, tpr, color='darkorange', lw=2, label='ROC Curve (area = %.4f)' % (roc_auc))   # plot the curve
-    plt.plot([0, 1], [0, 1], color='navy', lw=1, linestyle='--')                                # plot a diagonal line for reference
-    plt.xlim([0.0, 1.0])
-    plt.ylim([0.0, 1.05])
-    plt.xlabel('False Positive Rate')
-    plt.ylabel('True Positive Rate')
-    plt.title('Receiver Operating Characteristic (ROC) of Melanoma Model')
-    plt.legend(loc="lower right")
-    
-    eval_base = os.path.basename(model_name)
-    eval_filename = os.path.splitext(eval_base)[0]
-    eval_path = os.path.join(Config.EVAL_DEFAULT, eval_filename)
-    if not os.path.isdir(Config.EVAL_DEFAULT):
-        os.mkdir(Config.EVAL_DEFAULT)
-    if not os.path.isdir(eval_path):
-        os.mkdir(eval_path)
-    imgname = os.path.join(eval_path, '{}.png'.format(eval_filename))
-    plt.savefig(imgname, bbox_inches='tight')
-    stdLog(sys.stdout, 'ROC curve saved to {}\n'.format(imgname), DEBUG, fd)
-    #plt.show()
-
-    # 4.
-    tp = tpr * dataset.validset.num_pos
-    tn = (1 - fpr) * dataset.validset.num_neg
-    acc = (tp + tn) / len(dataset.validset)
-    best_threshold = thresholds[np.argmax(acc)]
-    probs = pred_list.cpu().reshape(-1)
-    thr = torch.Tensor([best_threshold])
-    valid_predictions = (probs >= thr).float()
-    val_acc = accuracy_score(label_list.cpu().reshape(-1), valid_predictions)
-    stdLog(sys.stdout, 'Optimal Threshold = %.4f, Accuracy under optimal threshold = %.2f%%\n' % (best_threshold, val_acc * 100), DEBUG, fd)
+                res = net(samples, meta_ensemble)
+            else:
+                res = net(samples)
+            pred = torch.sigmoid(res.reshape(-1, 1))
+            pred_list[i * validloader.batch_size : i * validloader.batch_size + len(samples)] = pred
+        
+        # 2.
+        label_list = dataset.validset.label_list.type_as(pred_list).reshape(-1, 1)
+        pred_list, label_list = pred_list.detach(), label_list.detach()
+        roc_auc = roc_auc_score(label_list.cpu(), pred_list.cpu())
+        stdLog(sys.stdout, 'Validation Set: roc_auc = %.2f%%\n' % (roc_auc * 100), DEBUG, fd)
+        
+        # 3.
+        true_label = label_list.reshape(-1).cpu().numpy()
+        pred_prob = pred_list.reshape(-1).cpu().numpy()
+        fpr, tpr, thresholds = roc_curve(true_label, pred_prob, pos_label=1)
+        plt.figure()
+        plt.plot(fpr, tpr, color='darkorange', lw=2, label='ROC Curve (area = %.4f)' % (roc_auc))   # plot the curve
+        plt.plot([0, 1], [0, 1], color='navy', lw=1, linestyle='--')                                # plot a diagonal line for reference
+        plt.xlim([0.0, 1.0])
+        plt.ylim([0.0, 1.05])
+        plt.xlabel('False Positive Rate')
+        plt.ylabel('True Positive Rate')
+        plt.title('Receiver Operating Characteristic (ROC) of Melanoma Model')
+        plt.legend(loc="lower right")
+        
+        eval_base = os.path.basename(model_name)
+        eval_filename = os.path.splitext(eval_base)[0]
+        eval_path = os.path.join(Config.EVAL_DEFAULT, eval_filename)
+        if not os.path.isdir(Config.EVAL_DEFAULT):
+            os.mkdir(Config.EVAL_DEFAULT)
+        if not os.path.isdir(eval_path):
+            os.mkdir(eval_path)
+        imgname = os.path.join(eval_path, '{}.png'.format(eval_filename))
+        plt.savefig(imgname, bbox_inches='tight')
+        stdLog(sys.stdout, 'ROC curve saved to {}\n'.format(imgname), DEBUG, fd)
+        #plt.show()
+        
+        # 4.
+        tp = tpr * dataset.validset.num_pos
+        tn = (1 - fpr) * dataset.validset.num_neg
+        acc = (tp + tn) / len(dataset.validset)
+        best_threshold = thresholds[np.argmax(acc)]
+        probs = pred_list.cpu().reshape(-1)
+        thr = torch.Tensor([best_threshold])
+        valid_predictions = (probs >= thr).float()
+        val_acc = accuracy_score(label_list.cpu().reshape(-1), valid_predictions)
+        stdLog(sys.stdout, 'Optimal Threshold = %.4f, Accuracy under optimal threshold = %.2f%%\n' % (best_threshold, val_acc * 100), DEBUG, fd)
 
     # 5.
-    pred_list = torch.zeros((len(dataset.testset), 1)).to(device)
-    stdLog(sys.stdout, "Evaluating on Test Set\n", DEBUG, fd)
-    for i, batch in enumerate(testloader):
-        samples, metas, labels = batch['image'], batch['meta'], batch['target']
-        if device:
-            samples, labels = samples.to(device), labels.to(device)
+    torch.cuda.empty_cache()
+    with torch.no_grad():
+        pred_list = torch.zeros((len(dataset.testset), 1)).to(device)
+        stdLog(sys.stdout, "Evaluating on Test Set\n", DEBUG, fd)
+        for i, batch in enumerate(testloader):
+            samples, metas, labels = batch['image'], batch['meta'], batch['target']
+            if device:
+                samples, labels = samples.to(device), labels.to(device)
+                if use_meta:
+                    meta_ensemble = metas['ensemble'].to(device)
             if use_meta:
-                meta_ensemble = metas['ensemble'].to(device)
-        if use_meta:
-            res = net(samples, meta_ensemble)
-        else:
-            res = net(samples)
-        pred = torch.sigmoid(res.reshape(-1, 1))
-        pred_list[i * testloader.batch_size : i * testloader.batch_size + len(samples)] = pred
+                res = net(samples, meta_ensemble)
+            else:
+                res = net(samples)
+            pred = torch.sigmoid(res.reshape(-1, 1))
+            pred_list[i * testloader.batch_size : i * testloader.batch_size + len(samples)] = pred
 
-    probs = pred_list.detach().reshape(-1)
-    thr = torch.Tensor([best_threshold]).to(device)
-    test_predictions = (probs >= thr).float()
+        probs = pred_list.detach().reshape(-1)
+        thr = torch.Tensor([best_threshold]).to(device)
+        test_predictions = (probs >= thr).float()
 
-    resname = os.path.join(eval_path, '{}.csv'.format(eval_filename))
-    resname_f = open(resname, 'w')
-    for i in range(len(dataset.testset)):
-        cur_res = '{},{}\n'.format(dataset.testset[i]['meta']['image_name'], int(test_predictions[i]))
-        stdLog(None, cur_res, False, fd)
-        resname_f.write(cur_res)
-    resname_f.close()
-    stdLog(sys.stdout, 'Predictions on test set output to {}\n'.format(resname), DEBUG, fd)
+        resname = os.path.join(eval_path, '{}.csv'.format(eval_filename))
+        resname_f = open(resname, 'w')
+        for i in range(len(dataset.testset)):
+            cur_res = '{},{}\n'.format(dataset.testset[i]['meta']['image_name'], int(test_predictions[i]))
+            stdLog(None, cur_res, False, fd)
+            resname_f.write(cur_res)
+        resname_f.close()
+        stdLog(sys.stdout, 'Predictions on test set output to {}\n'.format(resname), DEBUG, fd)
 
 if __name__ == '__main__':
     # Command Line Arguments
