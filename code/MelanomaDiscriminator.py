@@ -40,7 +40,7 @@ def predict(prob, threshold):
 def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATCH_SIZE_DEFAULT, ef_ver=Config.EFNET_VER_DEFAULT, \
           max_epoch=Config.MAX_EPOCHS_DEFAULT, eval_freq=Config.EVAL_FREQ_DEFAULT, optimizer=Config.OPTIMIZER_DEFAULT, \
           num_workers=Config.WORKERS_DEFAULT, use_gpu=True, folder=Config.DATA_DIR_DEFAULT, DEBUG=True, fd=None, time_tag='WHEN', \
-          rs=Config.RESIZE_DEFAULT, dh=Config.DRAW_HAIR_DEFAULT, model = Config.NETWORK_DEFAULT, use_meta=True):
+          rs=Config.RESIZE_DEFAULT, dh=Config.DRAW_HAIR_DEFAULT, model = Config.NETWORK_DEFAULT, use_meta=(Config.USE_META_DEFAULT == 1)):
     """
     Performs training and evaluation of the CNN model.
     """
@@ -183,6 +183,8 @@ def eval(model_name, minibatch_size=Config.BATCH_SIZE_DEFAULT, num_workers=Confi
     testloader = DataLoader(dataset.testset, batch_size=minibatch_size, shuffle=False, num_workers=num_workers)
 
     net = torch.load(model_name)
+    if not net.use_meta:    # fix older version issue
+        net.use_meta = False
     device = torch.device("cuda:0" if (bool(use_gpu) and torch.cuda.is_available()) else "cpu")
     stdLog(sys.stdout, "device: {}\n".format(device), DEBUG, fd)
     if device:

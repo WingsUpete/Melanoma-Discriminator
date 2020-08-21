@@ -15,9 +15,11 @@ import torchvision.models as models
 
 from efficientnet_pytorch import EfficientNet
 
+import Config
+
 class EfNet(nn.Module):
 
-    def __init__(self, efnet_version, meta=False, meta_len=24):
+    def __init__(self, efnet_version, meta=(Config.USE_META_DEFAULT == 1), meta_len=24):
         """
         Initializes a model network.
         
@@ -97,7 +99,7 @@ class Flatten(nn.Module):
 
 class ResNeXt(nn.Module):
 
-    def __init__(self, c_out=1, meta=False, meta_len=24):
+    def __init__(self, c_out=1, meta=(Config.USE_META_DEFAULT == 1), meta_len=24):
         super().__init__()
         remove_range = 2
         m = models.resnet18(pretrained=True)
