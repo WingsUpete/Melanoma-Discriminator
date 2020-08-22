@@ -91,11 +91,9 @@ class AdaptiveConcatPool2d(nn.Module):
         max_x = self.max(x)
         return torch.cat([avg_x, max_x], dim=1)
 
-
 class Flatten(nn.Module):
     def forward(self, x):
         return x.view(x.shape[0], -1)
-
 
 class ResNeXt(nn.Module):
 
@@ -149,6 +147,93 @@ class ResNeXt(nn.Module):
             return out
         else:
             return logits
+
+# Author of the code below: Wei Yanbin
+class GCNLikeCNN(nn.Module):
+    def __init__(self, meta=(Config.USE_META_DEFAULT == 1), meta_len=24, n_channels=3, n_classes=1):
+        """
+        Initializes CNN object.
+
+        Args:
+            n_channels: number of input channels
+            n_classes: number of classes of the classification problem
+        """
+        super().__init__()
+        self.use_meta = meta
+
+        self.image_path = nn.Sequential(
+            nn.Conv2d(n_channels, 64, 4, 2, 1),
+            nn.BatchNorm2d(64),
+            nn.ReLU(),
+            # 64*64*64
+            nn.Conv2d(64, 64, 4, 2, 1),
+            nn.BatchNorm2d(64),
+            nn.ReLU(),
+            nn.Conv2d(64, 64, 3, 1, 1),
+            nn.BatchNorm2d(64),
+            nn.ReLU(),
+            # 32*32*64
+            nn.MaxPool2d(4, 2, 1),
+            # 16*16*64
+
+            nn.Conv2d(64, 128, 3, 1, 1),
+            nn.BatchNorm2d(128),
+            nn.ReLU(),
+            nn.MaxPool2d(3, 2, 1),
+            # 8*8*128
+
+            nn.Conv2d(128, 256, 3, 1, 1),
+            nn.BatchNorm2d(256),
+            nn.ReLU(),
+            nn.Conv2d(256, 256, 3, 1, 1),
+            nn.BatchNorm2d(256),
+            nn.ReLU(),
+            nn.MaxPool2d(3, 2, 1),
+            # 4*4*256
+
+            nn.Conv2d(256, 32, 3, 1, 1),
+            nn.BatchNorm2d(32),
+            nn.ReLU(),
+            nn.MaxPool2d(3, 2, 1),
+            # 2*2*32
+        )
+
+        if self.use_meta:
+            self.meta_path = nn.Sequential(
+                nn.Linear(meta_len, 256),
+                nn.ReLU(),
+            )
+
+            self.FC = nn.Sequential(
+                nn.Linear(384, 256),
+                nn.ReLU(),
+                nn.Linear(256, 128),
+                nn.ReLU(),
+                nn.Linear(128, 64),
+                nn.ReLU(),
+                nn.Linear(64, n_classes),
+            )
+        else:
+            self.FC = nn.Linear(128, n_classes)
+
+    def forward(self, x1, x2=None):
+        """
+        Performs forward pass of the input.
+        Args:
+            x: input to the network
+        Returns:
+            out: outputs of the network
+        """
+        if not isinstance(x1, torch.Tensor):
+            x1 = torch.Tensor(x1)
+        if self.use_meta and (not isinstance(x2, torch.Tensor)):
+            x2 = torch.Tensor(x2)
+        conv_out = self.image_path(x1).view(-1, 128)
+        if self.use_meta:
+            meta_out = self.meta_path(x2)
+            return self.FC(torch.cat((conv_out, meta_out), dim=1))
+        else:
+            return self.FC(conv_out)
 
 if __name__ == '__main__':
     net = Net(1)

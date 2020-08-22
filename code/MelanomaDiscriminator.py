@@ -21,7 +21,7 @@ from torch.utils.data import DataLoader
 from sklearn.metrics import accuracy_score, roc_auc_score, roc_curve, precision_recall_curve
 
 from MelanomaDataSet import MelanomaDataSet
-from MelanomaModel import EfNet, ResNeXt
+from MelanomaModel import EfNet, ResNeXt, GCNLikeCNN
 
 import Config
 
@@ -57,6 +57,9 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
     elif model == 'ResNeXt':
         net = ResNeXt(meta=use_meta)
         stdLog(sys.stdout, "Using ResNeXt\n".format(ef_ver, rs), DEBUG, fd)
+    elif model == 'GCNLikeCNN':
+        net = GCNLikeCNN(meta=use_meta)
+        stdLog(sys.stdout, "Using GCN-Like CNN\n".format(ef_ver, rs), DEBUG, fd)
     criterion = nn.BCEWithLogitsLoss()
 
     # Select Optimizer
