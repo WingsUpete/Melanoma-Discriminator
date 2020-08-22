@@ -114,6 +114,7 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
                 res = net(samples, meta_ensemble)              # [[1], [2], [3]]
             else:
                 res = net(samples)
+            print(res.shape)
             loss = criterion(res.reshape(-1, 1), labels.type_as(res).reshape(-1, 1))  # BCEWithLogitsLoss does not support Long
             loss.backward()
             optimizer.step()
