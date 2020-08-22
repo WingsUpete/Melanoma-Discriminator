@@ -228,6 +228,7 @@ class GCNLikeCNN(nn.Module):
             x1 = torch.Tensor(x1)
         if self.use_meta and (not isinstance(x2, torch.Tensor)):
             x2 = torch.Tensor(x2)
+        print(x1.shape)
         conv_out = self.image_path(x1)
         print(conv_out.shape)
         conv_out = conv_out.view(-1, 128)
