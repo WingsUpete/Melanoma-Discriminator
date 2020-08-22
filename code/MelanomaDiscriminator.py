@@ -90,7 +90,7 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
     stdLog(sys.stdout, "Using meta: {}\n".format(use_meta), DEBUG, fd)
     stdLog(sys.stdout, "Start Training!\n", DEBUG, fd)
 
-    stdLog(sys.stdout, "------------------------------------------------------------\n", DEBUG, fd)
+    stdLog(sys.stdout, "------------------------------------------------------------------------\n", DEBUG, fd)
     
     if not os.path.isdir(Config.MODEL_DEFAULT):
         os.mkdir(Config.MODEL_DEFAULT)
@@ -168,7 +168,7 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
                     stdLog(sys.stdout, 'Model: {} has been saved.\n'.format(model_name), DEBUG, fd)
 
 def eval(model_name, minibatch_size=Config.BATCH_SIZE_DEFAULT, num_workers=Config.WORKERS_DEFAULT, use_gpu=True, DEBUG=True, fd=None, \
-         rs=Config.RESIZE_DEFAULT, dh=Config.DRAW_HAIR_DEFAULT, folder=Config.DATA_DIR_DEFAULT, use_meta = (Config.USE_META_DEFAULT == 1)):
+         rs=Config.RESIZE_DEFAULT, dh=Config.DRAW_HAIR_DEFAULT, folder=Config.DATA_DIR_DEFAULT):
     """
     Evaluate using saved best model
     1. Re-evaluate the validation set
@@ -179,6 +179,9 @@ def eval(model_name, minibatch_size=Config.BATCH_SIZE_DEFAULT, num_workers=Confi
     """
     
     # Load Melanoma Datast
+    # Customized GCN-Like CNN model can only accept input size of 128
+    if model == 'GCNLikeCNN':
+        rs = 128
     stdLog(sys.stdout, "Loading Melanoma Dataset...\n", DEBUG, fd)
     dataset = MelanomaDataSet(folder, train_transform=Config.get_train_transform(rs, bool(dh)), eval_transform=Config.get_eval_transform(rs), \
                               train=False, valid=True, test=True)
@@ -188,6 +191,7 @@ def eval(model_name, minibatch_size=Config.BATCH_SIZE_DEFAULT, num_workers=Confi
     net = torch.load(model_name)
     if not hasattr(net, 'use_meta'):    # fix older version issue
         setattr(net, 'use_meta', False)
+    use_meta = net.use_meta
     device = torch.device("cuda:0" if (bool(use_gpu) and torch.cuda.is_available()) else "cpu")
     stdLog(sys.stdout, "device: {}\n".format(device), DEBUG, fd)
     if device:
@@ -351,7 +355,7 @@ if __name__ == '__main__':
                 fd.close()
             exit(-1)
         eval(eval_file, minibatch_size = FLAGS.minibatch_size, num_workers = FLAGS.cores, use_gpu = FLAGS.gpu, DEBUG = True, \
-             fd = fd, rs = FLAGS.resize, dh = FLAGS.draw_hair, folder = FLAGS.data_dir, use_meta = (FLAGS.use_meta == 1))
+             fd = fd, rs = FLAGS.resize, dh = FLAGS.draw_hair, folder = FLAGS.data_dir)
     else:
         sys.stderr.write("Please specify the running mode (train/eval) - 'python MelanomaDiscriminator -m train'\n")
         if fd:
