@@ -41,6 +41,9 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
     """
     Performs training and evaluation of the CNN model.
     """
+    # Customized GCN-Like CNN model can only accept input size of 128
+    if model == 'GCNLikeCNN':
+        rs = 128
 
     # Load Melanoma Datast
     stdLog(sys.stdout, "Loading Melanoma Dataset...\n", DEBUG, fd)
@@ -174,15 +177,6 @@ def eval(model_name, minibatch_size=Config.BATCH_SIZE_DEFAULT, num_workers=Confi
     4. Find the optimal threshold for the model/network
     5. Use the optimal threshold to predict the test set
     """
-    
-    # Load Melanoma Datast
-    stdLog(sys.stdout, "Loading Melanoma Dataset...\n", DEBUG, fd)
-    print(rs)
-    dataset = MelanomaDataSet(folder, train_transform=Config.get_train_transform(rs, bool(dh)), eval_transform=Config.get_eval_transform(rs), \
-                              train=False, valid=True, test=True)
-    validloader = DataLoader(dataset.validset, batch_size=minibatch_size, shuffle=False, num_workers=num_workers)
-    testloader = DataLoader(dataset.testset, batch_size=minibatch_size, shuffle=False, num_workers=num_workers)
-
     net = torch.load(model_name)
     if not hasattr(net, 'use_meta'):    # fix older version issue
         setattr(net, 'use_meta', False)
@@ -192,6 +186,16 @@ def eval(model_name, minibatch_size=Config.BATCH_SIZE_DEFAULT, num_workers=Confi
     if device:
         net.to(device)
         stdLog(sys.stdout, "Best Model sent to CUDA\n", DEBUG, fd)
+    # Customized GCN-Like CNN model can only accept input size of 128
+    if isinstance(net, GCNLikeCNN):
+        rs = 128
+    
+    # Load Melanoma Datast
+    stdLog(sys.stdout, "Loading Melanoma Dataset...\n", DEBUG, fd)
+    dataset = MelanomaDataSet(folder, train_transform=Config.get_train_transform(rs, bool(dh)), eval_transform=Config.get_eval_transform(rs), \
+                              train=False, valid=True, test=True)
+    validloader = DataLoader(dataset.validset, batch_size=minibatch_size, shuffle=False, num_workers=num_workers)
+    testloader = DataLoader(dataset.testset, batch_size=minibatch_size, shuffle=False, num_workers=num_workers)
     
     # 1.
     net.eval()
@@ -326,10 +330,6 @@ if __name__ == '__main__':
     FLAGS, unparsed = parser.parse_known_args()
 
     
-    # Customized GCN-Like CNN model can only accept input size of 128
-    if FLAGS.network == 'GCNLikeCNN':
-        FLAGS.resize = 128
-
     time_tag = datetime.now().strftime('%Y%m%d_%H_%M_%S')
 
     # Starts a log file in the specified directory
