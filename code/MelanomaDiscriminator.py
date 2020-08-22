@@ -41,9 +41,6 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
     """
     Performs training and evaluation of the CNN model.
     """
-    # Customized GCN-Like CNN model can only accept input size of 128
-    if model == 'GCNLikeCNN':
-        rs = 128
 
     # Load Melanoma Datast
     stdLog(sys.stdout, "Loading Melanoma Dataset...\n", DEBUG, fd)
@@ -179,9 +176,6 @@ def eval(model_name, minibatch_size=Config.BATCH_SIZE_DEFAULT, num_workers=Confi
     """
     
     # Load Melanoma Datast
-    # Customized GCN-Like CNN model can only accept input size of 128
-    if model == 'GCNLikeCNN':
-        rs = 128
     stdLog(sys.stdout, "Loading Melanoma Dataset...\n", DEBUG, fd)
     dataset = MelanomaDataSet(folder, train_transform=Config.get_train_transform(rs, bool(dh)), eval_transform=Config.get_eval_transform(rs), \
                               train=False, valid=True, test=True)
@@ -330,6 +324,10 @@ if __name__ == '__main__':
 
     FLAGS, unparsed = parser.parse_known_args()
 
+    
+    # Customized GCN-Like CNN model can only accept input size of 128
+    if FLAGS.network == 'GCNLikeCNN':
+        FLAGS.resize = 128
 
     time_tag = datetime.now().strftime('%Y%m%d_%H_%M_%S')
 
