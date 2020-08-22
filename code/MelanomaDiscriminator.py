@@ -41,6 +41,9 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
     """
     Performs training and evaluation of the CNN model.
     """
+    # Customized GCN-Like CNN model can only accept input size of 128
+    if model == 'GCNLikeCNN':
+        rs = 128
 
     # Load Melanoma Datast
     stdLog(sys.stdout, "Loading Melanoma Dataset...\n", DEBUG, fd)

@@ -153,7 +153,7 @@ class GCNLikeCNN(nn.Module):
     def __init__(self, meta=(Config.USE_META_DEFAULT == 1), meta_len=24, n_channels=3, n_classes=1):
         """
         Initializes CNN object.
-
+        Note: Input size must be 128
         Args:
             n_channels: number of input channels
             n_classes: number of classes of the classification problem
@@ -228,10 +228,7 @@ class GCNLikeCNN(nn.Module):
             x1 = torch.Tensor(x1)
         if self.use_meta and (not isinstance(x2, torch.Tensor)):
             x2 = torch.Tensor(x2)
-        print(x1.shape)
-        conv_out = self.image_path(x1)
-        print(conv_out.shape)
-        conv_out = conv_out.view(-1, 128)
+        conv_out = self.image_path(x1).view(-1, 128)
         print(conv_out.shape)
         if self.use_meta:
             meta_out = self.meta_path(x2)
