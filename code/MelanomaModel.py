@@ -18,6 +18,11 @@ from efficientnet_pytorch import EfficientNet
 import Config
 
 class EfNet(nn.Module):
+    """
+    EfficientNet implementation
+    Main designer: Peter S
+    Metadata layer: Peter S, Wei Yanbin
+    """
 
     def __init__(self, efnet_version, meta=(Config.USE_META_DEFAULT == 1), meta_len=24):
         """
@@ -91,6 +96,7 @@ class EfNet(nn.Module):
         return out
 
 # Author of the code below: Peng Weiyuan
+# Metadata design: Wei Yanbin
 # parameter settings suggested in https://www.kaggle.com/zzy990106/pytorch-efficientnet-b2-resnext50
 class AdaptiveConcatPool2d(nn.Module):
     def __init__(self):

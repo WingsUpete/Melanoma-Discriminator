@@ -4,6 +4,7 @@
 ### Data Source: https://challenge2020.isic-archive.com/  ###
 #############################################################
 # Used for analyzing the data imbalance
+# Author: Peter S
 
 import os
 import pandas as pd

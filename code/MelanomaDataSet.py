@@ -5,6 +5,7 @@
 #############################################################
 # This file stores the melanoma data as an entity of PyTorch's Dataloader.
 # More: https://pytorch.org/tutorials/beginner/data_loading_tutorial.html
+# Author: Peter S (Metadata ensembled by Wei Yanbin)
 
 import os
 import sys
@@ -30,6 +31,8 @@ import Config
 class MDS_Entity(Dataset):
     """
     Melanoma DataSet Entity (Training / Validation / Test) 
+    Author: Peter S
+    Metadata Ensemble: Wei Yanbin, Peter S
     # image_name, sex, age_approx, anatom_site_general_challenge, diagnosis, benign_malignant, target
     eg. img_1, female, 35, torso, unknown, benign, 0
     """
@@ -133,7 +136,10 @@ class MDS_Entity(Dataset):
             return -1.0
 
 class MelanomaDataSet:
-    """ Melanoma DataSet """
+    """
+    Melanoma DataSet
+    Author: Peter S
+    """
 
     def __init__(self, path, train_transform=None, eval_transform=None, train=True, valid=True, test=True):
         """

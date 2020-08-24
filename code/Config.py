@@ -10,6 +10,9 @@ import os
 from torchvision import transforms
 from PIL import Image, ImageDraw
 
+# Transformation & Data Augmentation
+# Designed by Peter S, Wei Yanbin, Wang Ao, Peng Weiyuan
+
 # Settings
 class DrawHair:
     """

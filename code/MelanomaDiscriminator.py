@@ -4,6 +4,8 @@
 ### Data Source: https://challenge2020.isic-archive.com/  ###
 #############################################################
 # This file serves as the main for the whole module.
+# Overall framework design & coding: Peter S
+# Note: Test API = eval(...)
 
 import os
 import sys
@@ -170,7 +172,7 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
 def eval(model_name, minibatch_size=Config.BATCH_SIZE_DEFAULT, num_workers=Config.WORKERS_DEFAULT, use_gpu=True, DEBUG=True, fd=None, \
          rs=Config.RESIZE_DEFAULT, dh=Config.DRAW_HAIR_DEFAULT, folder=Config.DATA_DIR_DEFAULT):
     """
-    Evaluate using saved best model
+    Evaluate using saved best model (Note that this is a Test API)
     1. Re-evaluate the validation set
     2. Find the roc_auc score
     3. Plot the ROC curve
