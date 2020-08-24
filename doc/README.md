@@ -7,6 +7,8 @@ Created by <a href="mailto:petershen815@126.com">Peter S</a> on Aug 11th, 2020
 
 ## How to Run
 
+**Before anything, note that you need to run the code using `python3.6` on SUSTech server group 1 account, instead of `py`, `python` or any others.**
+
 ### As a Start - Dataset Management
 
 Before running the code, the data should be grouped together as follow:

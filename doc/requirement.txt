@@ -1,4 +1,5 @@
-# Requirements
+# Requirements: Used Packages
+# Note that all these dependencies have been set up on SUSTech server group 1 account, with python3.6 environment
 numpy: https://numpy.org/
 matplotlib: https://matplotlib.org/
 scipy: https://www.scipy.org/
