@@ -43,17 +43,17 @@ class EfNet(nn.Module):
         self.drop = nn.Dropout(0.3)
 
         if self.use_meta:
-            self.meta_features = 300
+            self.meta_features = 256
             self.final_fc_features = 128
 
             self.meta_path = nn.Sequential(
                 nn.Linear(meta_len, self.meta_features * 2), \
                 nn.ReLU(), \
-                nn.Dropout(p=0.2), \
+                nn.Dropout(p=0.3), \
                 nn.Linear(self.meta_features * 2, self.meta_features), \
                 nn.BatchNorm1d(self.meta_features), \
                 nn.ReLU(), \
-                nn.Dropout(p=0.2) \
+                nn.Dropout(p=0.3) \
             )
             #self.meta_path = nn.Sequential(
             #    nn.Linear(meta_len, self.meta_features * 2), \
