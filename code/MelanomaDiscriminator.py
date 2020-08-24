@@ -259,6 +259,12 @@ def eval(model_name, minibatch_size=Config.BATCH_SIZE_DEFAULT, num_workers=Confi
         valid_predictions = (probs >= thr).float()
         val_acc = accuracy_score(label_list.cpu().reshape(-1), valid_predictions)
         stdLog(sys.stdout, 'Optimal Threshold = %.4f, Accuracy under optimal threshold = %.2f%%\n' % (best_threshold, val_acc * 100), DEBUG, fd)
+        # Extra: Misclassified images
+        misclassified = []
+        for i in range(len(dataset.validset)):
+            if int(valid_predictions[i]) != int(dataset.validset[i]['meta']['target']): # misclassified
+                misclassified.append(dataset.validset[i]['meta']['image_name'])
+        stdLog(sys.stdout, "Misclassified Images: {}\n".format(misclassified), DEBUG, fd)
 
     # 5.
     torch.cuda.empty_cache()
