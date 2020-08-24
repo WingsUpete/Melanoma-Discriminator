@@ -192,7 +192,7 @@ def testSamplingSpeed(ds, batch_size, shuffle, tag, num_workers=4):
 if __name__ == '__main__':
     """
     Usage Example:
-        py MelanomaDataSet.py -c 6
+        python MelanomaDataSet.py -c 6
     """
     # Command Line Arguments
     parser = argparse.ArgumentParser()

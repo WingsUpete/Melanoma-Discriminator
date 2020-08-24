@@ -1,0 +1,10 @@
+# Requirements
+numpy: https://numpy.org/
+matplotlib: https://matplotlib.org/
+scipy: https://www.scipy.org/
+scikit-learn: https://scikit-learn.org/stable/ # ROC AUC computations
+jupyter: https://jupyter.org/
+pytorch (torch, torchvision): https://pytorch.org/
+PIL [Python Image Library]: https://python-pillow.org/ # read image and do transformations
+pandas: https://pandas.pydata.org/ # read csv
+efficientnet_pytorch: https://github.com/lukemelas/EfficientNet-PyTorch#about-efficientnet
