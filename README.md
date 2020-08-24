@@ -149,12 +149,14 @@ Examples of using this **main** program is as follow:
 
 2.  Evaluate on `model/20200821_08_29_25.pth`, using 10 CPU cores
 
+    Note: This is the **Test API provided**.
+    
     ```bash
-    python MelanomaDiscriminator.py -c 10 -m eval -e model/20200821_08_29_25.pth
+python MelanomaDiscriminator.py -c 10 -m eval -e model/20200821_08_29_25.pth
     ```
 
     And the output message is as follow:
-
+    
     ```bash
     2020-08-21 08:59:32.332891: Loading Melanoma Dataset...
     2020-08-21 08:59:37.800821: device: cuda:0
@@ -171,7 +173,7 @@ Examples of using this **main** program is as follow:
     ...
     2020-08-21 09:00:38.564192: img_233,1
     2020-08-21 09:00:38.776842: img_234,1
-    2020-08-21 09:00:38.777024: Predictions on test set output to eval/20200821_08_29_25/20200821_08_29_25.csv
+2020-08-21 09:00:38.777024: Predictions on test set output to eval/20200821_08_29_25/20200821_08_29_25.csv
     ```
 
     Additionally, a log file (e.g., `20200821_08_59_32.log`) will be generated in the `log` folder. A new folder (e.g., `20200821_08_29_25`) will be created in the `eval` folder and two more files will appear in that folder:
@@ -181,7 +183,7 @@ Examples of using this **main** program is as follow:
         <img src="doc/src/20200821_08_29_25.png" alt="20200821_08_29_25" style="zoom:67%;" />
 
     -   A csv file (e.g., `20200821_08_29_25.csv`)
-
+    
         <img src="doc/src/test_set_csv.png" alt="test_set_csv" style="zoom: 67%;" />
 
 ---
