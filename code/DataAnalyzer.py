@@ -15,6 +15,11 @@ dict_keys = ['sex', 'age_approx', 'anatom_site_general_challenge', \
              'diagnosis', 'benign_malignant', 'target']
 
 def freq_statistics(csv_file):
+    """
+    Count the frequencies of values appearing in the csv file of a specified set
+    Args:
+        csv_file (str): path of the csv file
+    """
     data_frame = pd.read_csv(csv_file)
     melanoma_map = {}
     for _ in range(len(data_frame)):

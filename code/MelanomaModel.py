@@ -30,6 +30,8 @@ class EfNet(nn.Module):
         
         Args:
             efnet_version (int/str): which version to train on [0, 7]
+            meta (bool): whether to use metadata
+            meta_len (int): input length of the metadata
         Vars:
             efnet (EfficientNet): the EfficientNet network to be used
         """
@@ -40,7 +42,7 @@ class EfNet(nn.Module):
         self.efnet = EfficientNet.from_pretrained('efficientnet-b{}'.format(self.efnet_version))
         in_features = getattr(self.efnet, '_fc').in_features
         
-        self.drop = nn.Dropout(0.3)
+        self.drop = nn.Dropout(0.2)
 
         if self.use_meta:
             self.meta_features = 256
@@ -82,6 +84,7 @@ class EfNet(nn.Module):
         
         Args:
           x: input to the network
+          meta_ensemble: metadata ensemble input to the network
         Returns:
           out: outputs of the network
         """

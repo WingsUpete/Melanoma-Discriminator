@@ -45,6 +45,10 @@ class MDS_Entity(Dataset):
             transform (callable, optional): Optional transform to be applied
                 on a sample.
             test (Boolean): whether this is a test set
+        Vars:
+            label_list (list): sequential labels for the sample images
+            num_pos (int): number of positive samples
+            neg_pos (int): number of negative samples
         """
         self.data_frame = pd.read_csv(csv_file)
         with open(Config.META_MAPPING_DEFAULT) as f:
@@ -71,6 +75,14 @@ class MDS_Entity(Dataset):
         return len(self.data_frame)
 
     def __getitem__(self, idx):
+        """
+        Returns a sample for training or evaluation
+        One sample will contain information as follow:
+            -> A tensor processed from image transformations
+            -> A set of metadata
+            -> An ensemble tensor of the metadata, for training
+            -> The label/target value for the sample
+        """
         if torch.is_tensor(idx):
             idx = idx.tolist()
 
@@ -146,11 +158,10 @@ class MelanomaDataSet:
         Inputs:
             train, valid, test (Boolean): whether the training set, validation set, test set
                 should be included
-            transform (Boolean): whether the sample should be transformed on the fly
+            train_transform (callable): the transformation function for the training set
+            eval_transform (callable): the transformation function for the validation set and the test set
         Args:
             path (string): root directory of data set
-            rescale (int): rescale dimension for transform
-            randCrop (int): random crop dimension for transform
             trainset (MDS_Entity): training set instance
             validset (MDS_Entity): validation set instance
             testset (MDS_Entity): test set instance
@@ -183,6 +194,9 @@ class MelanomaDataSet:
         sys.stderr.write('Melanoma DataSet Ready: {}\n'.format([key for key in self.__sets__ if self.__sets__[key]]))
 
 def testSamplingSpeed(ds, batch_size, shuffle, tag, num_workers=4):
+    """
+    Test the sampling functionality & efficiency
+    """
     dataloader = DataLoader(ds, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers)
     time0 = time.time()
 

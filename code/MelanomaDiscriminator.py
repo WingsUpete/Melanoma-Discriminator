@@ -30,6 +30,11 @@ import Config
 def stdLog(stdwhich, str, DEBUG=True, fd=None):
     """
     Output to std & log file
+    Args:
+        stdwhich: stdout/stdin/stderr
+        str: content to be logged
+        DEBUG: whether to log the string to std
+        fd: the file discriptor of the file to log the string in
     """
     if fd:
         fd.write('{}: {}'.format(datetime.now(), str))
@@ -41,7 +46,7 @@ def train(learning_rate=Config.LEARNING_RATE_DEFAULT, minibatch_size=Config.BATC
           num_workers=Config.WORKERS_DEFAULT, use_gpu=True, folder=Config.DATA_DIR_DEFAULT, DEBUG=True, fd=None, time_tag='WHEN', \
           rs=Config.RESIZE_DEFAULT, dh=Config.DRAW_HAIR_DEFAULT, model = Config.NETWORK_DEFAULT, use_meta=(Config.USE_META_DEFAULT == 1)):
     """
-    Performs training and evaluation of the CNN model.
+    Performs training and evaluation of the model.
     """
     # Customized GCN-Like CNN model can only accept input size of 128
     if model == 'GCNLikeCNN':
