@@ -7,6 +7,7 @@
 
 import os
 import pandas as pd
+import argparse
 import json
 
 dict_keys = ['sex', 'age_approx', 'anatom_site_general_challenge', \
@@ -35,6 +36,22 @@ def freq_statistics(csv_file):
     return melanoma_map
 
 if __name__ == '__main__':
-    #freq_statistics('DataSet/training_set.csv')
-    #freq_statistics('DataSet/validation_set.csv')
-    freq_statistics('DataSet/test_set.csv')
+    """
+    Usage Example:
+        python DataAnalyzer.py -set train
+    """
+    # Command Line Arguments
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-set', '--set', type=str, default='train', \
+                        help='Specify which set to analyze frequency on [train/valid/test], default={}'.format('train'))
+    FLAGS, unparsed = parser.parse_known_args()
+
+    settype = FLAGS.set
+    if settype == 'train':
+        freq_statistics('DataSet/training_set.csv')
+    elif settype == 'valid':
+        freq_statistics('DataSet/validation_set.csv')
+    elif settype == 'test':
+        freq_statistics('DataSet/test_set.csv')
+    else:
+        freq_statistics('DataSet/training_set.csv')

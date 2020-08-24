@@ -292,6 +292,11 @@ def eval(model_name, minibatch_size=Config.BATCH_SIZE_DEFAULT, num_workers=Confi
         stdLog(sys.stdout, 'Predictions on test set output to {}\n'.format(resname), DEBUG, fd)
 
 if __name__ == '__main__':
+    """
+    Usage Example:
+        python MelanomaDiscriminator.py -c 10 -m train -net EfficientNet -meta 1
+        python MelanomaDiscriminator.py -c 10 -m eval -e model/20200821_08_29_25.pth
+    """
     # Command Line Arguments
     parser = argparse.ArgumentParser()
     parser.add_argument('-lr', '--learning_rate', type = float, default = Config.LEARNING_RATE_DEFAULT, \
@@ -303,7 +308,7 @@ if __name__ == '__main__':
     parser.add_argument('-bs', '--minibatch_size', type = int, default = Config.BATCH_SIZE_DEFAULT, \
                         help='Size of a minibatch, default = {}'.format(Config.BATCH_SIZE_DEFAULT))
     parser.add_argument('-opt', '--optimizer', type = str, default = Config.OPTIMIZER_DEFAULT, \
-                        help='Optimizer to be used [Adam, RMSprop], default = {}'.format(Config.OPTIMIZER_DEFAULT))
+                        help='Optimizer to be used [ADAM, RMSprop, ADAMW], default = {}'.format(Config.OPTIMIZER_DEFAULT))
     parser.add_argument('-dr', '--data_dir', type = str, default = Config.DATA_DIR_DEFAULT, \
                         help='Root directory of the input data, default = {}'.format(Config.DATA_DIR_DEFAULT))
     parser.add_argument('-log', '--log', type = str, default = Config.LOG_DEFAULT, \

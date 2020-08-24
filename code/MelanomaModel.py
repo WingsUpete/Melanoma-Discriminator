@@ -59,14 +59,14 @@ class EfNet(nn.Module):
             #    nn.ReLU() \
             #)
             
-            self.final_fc = nn.Sequential(
-                nn.Linear(in_features + self.meta_features, 1)
-            )
             #self.final_fc = nn.Sequential(
-            #    nn.Linear(in_features + self.meta_features, self.final_fc_features),
-            #    nn.ReLU(),
-            #    nn.Linear(self.final_fc_features, 1)
+            #    nn.Linear(in_features + self.meta_features, 1)
             #)
+            self.final_fc = nn.Sequential(
+                nn.Linear(in_features + self.meta_features, self.final_fc_features),
+                nn.ReLU(),
+                nn.Linear(self.final_fc_features, 1)
+            )
         else:
             self.classifier = nn.Linear(in_features, 1)
     
@@ -246,7 +246,3 @@ class GCNLikeCNN(nn.Module):
             return self.FC(torch.cat((conv_out, meta_out), dim=1))
         else:
             return self.FC(conv_out)
-
-if __name__ == '__main__':
-    net = Net(1)
-    
