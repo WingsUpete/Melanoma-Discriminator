@@ -47,6 +47,12 @@ The data is from SSIM-ISIC Melanoma Classification Challenge: https://challenge2
 
 ---
 
+### Metadata [Wei Yanbin]
+
+…
+
+---
+
 ### Dataset Structure [Peter S]
 
 …
