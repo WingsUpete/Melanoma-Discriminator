@@ -41,13 +41,13 @@ The data is from SSIM-ISIC Melanoma Classification Challenge: https://challenge2
 
 ## Project Detail
 
-### Data Augmentation
+### Data Augmentation [Wang Ao]
 
 …
 
 ---
 
-### Dataset Structure
+### Dataset Structure [Peter S]
 
 …
 
@@ -55,37 +55,37 @@ The data is from SSIM-ISIC Melanoma Classification Challenge: https://challenge2
 
 ### Model
 
-#### VGG
+#### VGG [Wang Ao]
 
 …
 
-#### GCN-Like CNN
+#### GCN-Like CNN [Wei Yanbin]
 
 …
 
-#### ResNet/ResNeXt
+#### ResNet/ResNeXt [Peng Weiyuan]
 
 …
 
-#### EfficientNet
-
-…
-
----
-
-### Training/Evaluation Process
+#### EfficientNet [Peter S]
 
 …
 
 ---
 
-### Results
+### Training/Evaluation Process [Peter S]
 
 …
 
 ---
 
-### Problems & Solutions
+### Results [All]
+
+…
+
+---
+
+### Problems & Solutions [All]
 
 …
 
@@ -93,13 +93,13 @@ The data is from SSIM-ISIC Melanoma Classification Challenge: https://challenge2
 
 ## Extra Contents
 
-### ROC & AUC
+### ROC & AUC [All]
 
 …
 
 ---
 
-### Misclassified Images in the Validation Set
+### Misclassified Images in the Validation Set [Peng Weiyuan]
 
 …
 
