@@ -42,7 +42,7 @@ class EfNet(nn.Module):
         self.efnet = EfficientNet.from_pretrained('efficientnet-b{}'.format(self.efnet_version))
         in_features = getattr(self.efnet, '_fc').in_features
         
-        self.drop = nn.Dropout(0.2)
+        self.drop = nn.Dropout(0.3)
 
         if self.use_meta:
             self.meta_features = 256
@@ -72,7 +72,7 @@ class EfNet(nn.Module):
             self.final_fc = nn.Sequential( \
                 nn.Linear(in_features + self.meta_features, self.final_fc_features), \
                 nn.ReLU(), \
-                nn.Dropout(p=0.2), \
+                nn.Dropout(p=0.25), \
                 nn.Linear(self.final_fc_features, 1) \
             )
         else:
