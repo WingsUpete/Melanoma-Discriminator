@@ -46,14 +46,14 @@ class EfNet(nn.Module):
             self.meta_features = 256
             self.final_fc_features = 128
 
-            self.meta_path = nn.Sequential(
+            self.meta_path = nn.Sequential( \
                 nn.Linear(meta_len, self.meta_features * 2), \
                 nn.ReLU(), \
-                nn.Dropout(p=0.3), \
+                nn.Dropout(p=0.2), \
                 nn.Linear(self.meta_features * 2, self.meta_features), \
                 nn.BatchNorm1d(self.meta_features), \
                 nn.ReLU(), \
-                nn.Dropout(p=0.3) \
+                nn.Dropout(p=0.2) \
             )
             #self.meta_path = nn.Sequential(
             #    nn.Linear(meta_len, self.meta_features * 2), \
@@ -67,10 +67,11 @@ class EfNet(nn.Module):
             #self.final_fc = nn.Sequential(
             #    nn.Linear(in_features + self.meta_features, 1)
             #)
-            self.final_fc = nn.Sequential(
-                nn.Linear(in_features + self.meta_features, self.final_fc_features),
-                nn.ReLU(),
-                nn.Linear(self.final_fc_features, 1)
+            self.final_fc = nn.Sequential( \
+                nn.Linear(in_features + self.meta_features, self.final_fc_features), \
+                nn.ReLU(), \
+                nn.Dropout(p=0.2), \
+                nn.Linear(self.final_fc_features, 1) \
             )
         else:
             self.classifier = nn.Linear(in_features, 1)
