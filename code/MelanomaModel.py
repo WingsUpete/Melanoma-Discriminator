@@ -72,7 +72,7 @@ class EfNet(nn.Module):
             self.final_fc = nn.Sequential( \
                 nn.Linear(in_features + self.meta_features, self.final_fc_features), \
                 nn.ReLU(), \
-                nn.Dropout(p=0.25), \
+                nn.Dropout(p=0.2), \
                 nn.Linear(self.final_fc_features, 1) \
             )
         else:
