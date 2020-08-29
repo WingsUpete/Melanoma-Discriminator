@@ -152,7 +152,7 @@ Examples of using this **main** program is as follow:
     Note: This is the **Test API provided**.
     
     ```bash
-python MelanomaDiscriminator.py -c 10 -m eval -e model/20200821_08_29_25.pth
+	python MelanomaDiscriminator.py -c 10 -m eval -e model/20200821_08_29_25.pth
     ```
 
     And the output message is as follow:
